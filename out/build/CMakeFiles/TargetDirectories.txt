@@ -1,0 +1,3 @@
+/home/kmro/studia/mini/msi2/MSI2-CVRP/out/build/CMakeFiles/rebuild_cache.dir
+/home/kmro/studia/mini/msi2/MSI2-CVRP/out/build/CMakeFiles/CVRP.dir
+/home/kmro/studia/mini/msi2/MSI2-CVRP/out/build/CMakeFiles/edit_cache.dir
