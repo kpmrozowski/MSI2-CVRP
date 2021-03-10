@@ -101,7 +101,7 @@ class Graph {
 
    void set_pheromone(VertId a, VertId b, double value) {
       m_edges[a * m_vert_count + b]->pheromone = value;
-      m_edges[b * m_vert_count + a]->pheromone = value;
+//      m_edges[b * m_vert_count + a]->pheromone = value;
    }
 };
 
@@ -230,7 +230,7 @@ int main() {
    graph.connect(1, 6, {1.0, 1.5});
    graph.connect(6, 5, {1.0, 1.5});
 
-   msi::ant_system::Tour tour(graph, r, 10, 5, 5);
+   msi::ant_system::Tour tour(graph, r, 100, 6, 5);
    for (std::size_t i = 0; i < 10; ++i) {
       tour.run();
       tour.reset();
