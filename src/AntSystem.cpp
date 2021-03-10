@@ -113,7 +113,7 @@ class IRandomGenerator {
 
 class Ant {
    std::set<VertId> m_visited;
-   std::set<std::pair<VertId, VertId>> m_visited_edges;
+   std::vector<std::pair<VertId, VertId>> m_visited_edges;
    VertId m_current_vert;
 
  public:
@@ -142,7 +142,7 @@ class Ant {
          return;
       }
 
-      m_visited_edges.insert(std::make_pair(m_current_vert, selected_vert));
+      m_visited_edges.emplace_back(m_current_vert, selected_vert);
       m_visited.insert(selected_vert);
       m_current_vert = selected_vert;
    }
@@ -151,7 +151,7 @@ class Ant {
       return m_current_vert;
    }
 
-   [[nodiscard]] constexpr const std::set<std::pair<VertId, VertId>> &edges() const noexcept {
+   [[nodiscard]] constexpr const std::vector<std::pair<VertId, VertId>> &edges() const noexcept {
       return m_visited_edges;
    }
 };
