@@ -22,7 +22,7 @@ void Graph::print() const noexcept {
    for (VertId i = 0; i < m_vert_count; ++i) {
       fmt::print("vertex connections {}\n", i);
       for_each_connected(i, [](VertId id, const Edge &e) {
-         fmt::print(" {} (fer: {})\n", id, e.pheromone);
+         fmt::print(" {} (fer: {}, dist: {})\n", id, e.pheromone, e.distance);
          return false;
       });
    }

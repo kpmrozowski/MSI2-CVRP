@@ -41,3 +41,44 @@ TEST(AntSystem, BasicGraph) {
    ASSERT_GT(graph.pheromone(6, 5), graph.pheromone(6, 1));
    ASSERT_GT(graph.pheromone(4, 5), graph.pheromone(4, 1));
 }
+
+static std::size_t find_path_length(msi::ant_system::Graph &graph, msi::ant_system::VertId starting_vertex) {
+   msi::ant_system::VertId current_vertex = starting_vertex;
+   std::size_t path_length = 0;
+   while (current_vertex != 0) {
+      msi::ant_system::VertId best_neighbour = -1;
+      double best_fer_value = 0.0;
+      graph.for_each_connected(current_vertex, [&best_neighbour, &best_fer_value](msi::ant_system::VertId vertex, const msi::ant_system::Edge &edge) {
+        if (edge.pheromone > best_fer_value) {
+           best_fer_value = edge.pheromone;
+           best_neighbour = vertex;
+        }
+        return false;
+      });
+      current_vertex = best_neighbour;
+      ++path_length;
+   }
+   return path_length;
+}
+
+TEST(AntSystem, RandomGraph) {
+   srand(800);
+   Random r;
+
+   msi::ant_system::Graph graph(50);
+   for (std::size_t i = 0; i < 200; ++i) {
+      graph.connect(r.next_int(50), r.next_int(50), {1.0, r.next_double(10.0)});
+   }
+
+   msi::ant_system::Tour tour(graph, r, 100, 50, 0);
+   for (std::size_t i = 0; i < 100; ++i) {
+      tour.run();
+      tour.reset();
+   }
+
+   graph.print();
+
+   ASSERT_EQ(find_path_length(graph, 49), 2);
+   ASSERT_EQ(find_path_length(graph, 30), 6);
+   ASSERT_EQ(find_path_length(graph, 2), 5);
+}
