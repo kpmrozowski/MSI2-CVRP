@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(CVRP)
 
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
 
 include(FetchContent)
@@ -22,5 +22,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fmt)
 
-add_executable(${PROJECT_NAME} main.cpp src/AntSystem.cpp)
-target_link_libraries(${PROJECT_NAME} spdlog fmt)
+FetchContent_Declare(
+        gtest
+        GIT_REPOSITORY https://github.com/google/googletest
+        GIT_TAG release-1.10.0
+)
+FetchContent_MakeAvailable(gtest)
+
+include_directories(./include)
+
+add_subdirectory(src/AntSystem)
+add_subdirectory(src/Test)
