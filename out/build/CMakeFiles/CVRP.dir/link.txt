@@ -1,1 +1,1 @@
-/usr/bin/c++ CMakeFiles/CVRP.dir/main.cpp.o -o CVRP 
+/usr/bin/c++  -Wall -Wextra -Wpedantic -O3 -DNDEBUG   CMakeFiles/CVRP.dir/main.cpp.o CMakeFiles/CVRP.dir/src/AntSystem.cpp.o  -o CVRP  _deps/spdlog-build/libspdlog.a _deps/fmt-build/libfmt.a -lpthread 

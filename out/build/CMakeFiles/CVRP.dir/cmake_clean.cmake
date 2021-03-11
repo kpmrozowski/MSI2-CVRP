@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/CVRP.dir/main.cpp.o"
+  "CMakeFiles/CVRP.dir/src/AntSystem.cpp.o"
   "CVRP"
   "CVRP.pdb"
 )
