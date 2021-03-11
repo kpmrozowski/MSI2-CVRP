@@ -23,4 +23,4 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmt)
 
 add_executable(${PROJECT_NAME} main.cpp src/AntSystem.cpp)
-target_link_libraries(${PROJECT_NAME} spdlog)
+target_link_libraries(${PROJECT_NAME} spdlog fmt)
