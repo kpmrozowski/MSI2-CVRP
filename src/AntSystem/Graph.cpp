@@ -1,12 +1,7 @@
 #include <MSI/AntSystem/Graph.h>
-#include <cmath>
 #include <fmt/core.h>
 
 namespace msi::ant_system {
-
-constexpr double Edge::prob() const noexcept {
-   return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
-}
 
 Graph::Graph(std::size_t vert_count) : m_edges(vert_count * vert_count), m_vert_count(vert_count) {}
 

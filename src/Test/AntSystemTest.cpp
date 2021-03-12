@@ -75,6 +75,8 @@ TEST(AntSystem, RandomGraph) {
       tour.reset();
    }
 
+   graph.print();
+
    ASSERT_EQ(find_path_length(graph, 49), 2);
    ASSERT_EQ(find_path_length(graph, 30), 5);
    ASSERT_EQ(find_path_length(graph, 2), 5);
@@ -96,14 +98,16 @@ TEST(AntSystem, Hub) {
    graph.connect(1, 7, {1.0, 2.5});
    graph.connect(1, 8, {1.0, 3.5});
    // 9 is connected to 0 and to 2 one
-   graph.connect(9, 0, {1.0, 3.0});
+   graph.connect(9, 0, {1.0, 4.0});
    graph.connect(9, 1, {1.0, 2.0});
 
    msi::ant_system::Tour tour(graph, r, 20, 10, 0);
-   for (std::size_t i = 0; i < 10; ++i) {
+   for (std::size_t i = 0; i < 100; ++i) {
       tour.run();
       tour.reset();
    }
+
+   graph.print();
 
    // we want ants from vertex 9 to go directly to 0 rather than going though a hub
    ASSERT_GT(graph.pheromone(9, 0), graph.pheromone(9, 1));
