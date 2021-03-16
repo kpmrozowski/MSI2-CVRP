@@ -65,6 +65,7 @@ TEST(AntSystem, RandomGraph) {
 
    msi::ant_system::Graph graph(50);
    for (std::size_t i = 0; i < 200; ++i) {
+      // tutaj 200 razy losujesz polaczenia miedzy 50 wierzchołkami, ale ze zwracaniem, czyli część wierzchołków jest niepolaczonych...
       graph.connect(r.next_int(50), r.next_int(50), {1.0, r.next_double(10.0)});
    }
 
