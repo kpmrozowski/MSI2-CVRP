@@ -1,12 +1,7 @@
 #include <MSI/AntSystem/Graph.h>
-#include <cmath>
 #include <fmt/core.h>
 
 namespace msi::ant_system {
-
-constexpr double Edge::prob() const noexcept {
-   return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
-}
 
 Graph::Graph(std::size_t vert_count) : m_edges(vert_count * vert_count), m_vert_count(vert_count) {}
 
@@ -22,7 +17,7 @@ void Graph::print() const noexcept {
    for (VertId i = 0; i < m_vert_count; ++i) {
       fmt::print("vertex connections {}\n", i);
       for_each_connected(i, [](VertId id, const Edge &e) {
-         fmt::print(" {} (fer: {})\n", id, e.pheromone);
+         fmt::print(" {} (fer: {}, dist: {})\n", id, e.pheromone, e.distance);
          return false;
       });
    }

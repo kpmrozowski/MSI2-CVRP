@@ -1,6 +1,7 @@
 #ifndef CVRP_GRAPH_H
 #define CVRP_GRAPH_H
 #include "Constants.h"
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -13,7 +14,9 @@ struct Edge {
    double pheromone;
    double distance;
 
-   [[nodiscard]] constexpr double prob() const noexcept;
+   [[nodiscard]] constexpr double prob() const noexcept {
+      return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
+   }
 };
 
 using VertId = std::size_t;
