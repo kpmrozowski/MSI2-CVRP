@@ -15,10 +15,10 @@ void Tour::reset() noexcept {
 }
 
 void Tour::run() noexcept {
-   for (std::size_t pass = 0; pass < m_passes; ++pass) {
-      for (std::unique_ptr<Ant> &ant : m_ants) {
+   for (std::unique_ptr<Ant> &ant : m_ants) {
+      for (std::size_t pass = 0; pass < m_passes; ++pass) {
          if (ant->current_vert() == m_target) {
-            continue;
+            break;
          }
          ant->choose_next(m_graph, m_rand);
       }
@@ -37,7 +37,7 @@ void Tour::run() noexcept {
       });
 
       for (const auto &pair : edges) {
-         m_graph.set_pheromone(pair.first, pair.second, m_graph.pheromone(pair.first, pair.second) + 1.0 / total_distance);
+         m_graph.add_pheromone(pair.first, pair.second, 1.0 / total_distance);
       }
    }
 }
