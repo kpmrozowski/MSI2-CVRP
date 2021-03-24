@@ -33,7 +33,8 @@ class Graph {
    void for_each_connected(VertId vert, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
    void evaporate() noexcept;
    void set_pheromone(VertId a, VertId b, double value);
-   [[nodiscard]] double find_prob_sum(VertId id, std::set<VertId> &except) const;
+   void add_pheromone(VertId a, VertId b, double value);
+   [[nodiscard]] double probability_sum(VertId id, std::set<VertId> &except) const;
    [[nodiscard]] double pheromone(VertId a, VertId b) const;
    [[nodiscard]] double distance(VertId a, VertId b) const;
 
