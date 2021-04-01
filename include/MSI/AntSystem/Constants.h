@@ -4,7 +4,7 @@
 namespace msi::ant_system {
 
 constexpr double g_alpha = 1.0;
-constexpr double g_beta = 0.8;
+constexpr double g_beta = 1.0;
 constexpr double g_evapor = 0.95;
 
 }

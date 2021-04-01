@@ -48,7 +48,7 @@ void Graph::evaporate() noexcept {
    }
 }
 
-double Graph::find_prob_sum(VertId id, std::set<VertId> &except) const {
+double Graph::probability_sum(VertId id, std::set<VertId> &except) const {
    double result = 0.0;
    for_each_connected(id, [&result, &except](VertId id, const Edge &edge) {
       auto visited_it = except.find(id);
@@ -67,11 +67,44 @@ double Graph::pheromone(VertId a, VertId b) const {
 }
 
 double Graph::distance(VertId a, VertId b) const {
-   return m_edges[a * m_vert_count + b]->distance;
+   auto edge = m_edges[a * m_vert_count + b];
+   if (edge.has_value()) {
+      return edge->distance;
+   }
+   return std::numeric_limits<double>::infinity();
 }
 
 void Graph::set_pheromone(VertId a, VertId b, double value) {
    m_edges[a * m_vert_count + b]->pheromone = value;
+}
+
+void Graph::add_pheromone(VertId a, VertId b, double value) {
+   m_edges[a * m_vert_count + b]->pheromone += value;
+}
+
+double find_shortest_path(Graph &g, VertId from, VertId to) {
+   std::vector<double> distances(g.vert_count() * g.vert_count());
+   for (VertId i = 0; i < g.vert_count(); ++i) {
+      for (VertId j = 0; j < g.vert_count(); ++j) {
+         if (i == j) {
+            distances[i + j * g.vert_count()] = 0;
+            continue;
+         }
+         distances[i + j * g.vert_count()] = g.distance(i, j);
+      }
+   }
+
+   for (VertId k = 0; k < g.vert_count(); ++k) {
+      for (VertId i = 0; i < g.vert_count(); ++i) {
+         for (VertId j = 0; j < g.vert_count(); ++j) {
+            if (distances[i + g.vert_count() * j] > distances[i + g.vert_count() * k] + distances[k + g.vert_count() * j]) {
+               distances[i + g.vert_count() * j] = distances[i + g.vert_count() * k] + distances[k + g.vert_count() * j];
+            }
+         }
+      }
+   }
+
+   return distances[from + g.vert_count() * to];
 }
 
 }// namespace msi::ant_system
