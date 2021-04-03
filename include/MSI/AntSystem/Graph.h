@@ -10,8 +10,15 @@
 
 namespace msi::ant_system {
 
+struct Position {
+   Position(double _x1, double _y1, double _x2, double _y2);
+   double x1, y1, x2, y2;
+};
+
 struct Edge {
+   Edge(double _pheromone, double _distance, Position _pos);
    double pheromone;
+   Position pos;
    double distance;
 
    [[nodiscard]] constexpr double prob() const noexcept {
@@ -22,10 +29,10 @@ struct Edge {
 using VertId = std::size_t;
 
 class Graph {
+ public:
    std::vector<std::optional<Edge>> m_edges;
    std::size_t m_vert_count;
 
- public:
    explicit Graph(std::size_t vert_count);
 
    void connect(VertId a, VertId b, Edge e) noexcept;
