@@ -2,6 +2,7 @@
 #include <MSI/AntSystem/Tour.h>
 #include <MSI/Util/IRandomGenerator.h>
 #include <gtest/gtest.h>
+#include <MSI/CVRP/ReadGraph.h>
 
 class Random : public msi::util::IRandomGenerator {
  public:
@@ -13,3 +14,8 @@ class Random : public msi::util::IRandomGenerator {
       return std::rand() % max;
    }
 };
+
+TEST(CVRP, ReadGraph) {
+    msi::cvrp::Reader re;
+    re.read();
+}

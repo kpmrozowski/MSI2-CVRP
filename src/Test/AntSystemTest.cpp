@@ -30,12 +30,6 @@ TEST(AntSystem, BasicGraph) {
       tour.run();
       tour.reset();
    }
-   
-   msi::cvrp::Vertices vertices;
-   vertices.translate_vert_into_edges(graph);
-
-   msi::cvrp::Opengl opengl;
-   opengl.draw(vertices);
 
    ASSERT_GT(graph.pheromone(0, 1), graph.pheromone(0, 2));
    ASSERT_GT(graph.pheromone(1, 6), graph.pheromone(1, 4));
@@ -84,8 +78,8 @@ TEST(AntSystem, RandomGraph) {
    graph.print();
 
    ASSERT_EQ(find_path_length(graph, 49), 2);
-   // ASSERT_EQ(find_path_length(graph, 30), 5);
-   // ASSERT_EQ(find_path_length(graph, 2), 5);
+   ASSERT_EQ(find_path_length(graph, 30), 3);
+   ASSERT_EQ(find_path_length(graph, 2), 4);
 }
 
 TEST(AntSystem, Hub) {
@@ -94,18 +88,24 @@ TEST(AntSystem, Hub) {
 
    msi::ant_system::Graph graph(10);
    // 1 is a hub that is connected to 0
-   graph.connect(0, 1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.0, 0.0, 0.1, 0.1)));
+   graph.connect(0, 1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.0, 1.0, 2.25, 1.0)));
    // 2-8 are connected to 1
-   graph.connect(1, 2, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 2.0, 0.0)));
-   graph.connect(1, 3, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 0.0, 1.0)));
-   graph.connect(1, 4, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 1.0, 3.0)));
-   graph.connect(1, 5, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 2.0, 1.0)));
-   graph.connect(1, 6, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 2.0, 2.0)));
-   graph.connect(1, 7, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 3.0, 1.0)));
-   graph.connect(1, 8, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.1, 0.1, 3.0, 2.0)));
+   graph.connect(1, 2, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 4.25, 1.0)));
+   graph.connect(1, 3, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 2.25, 2.0)));
+   graph.connect(1, 4, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 3.25, 4.0)));
+   graph.connect(1, 5, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 4.25, 2.0)));
+   graph.connect(1, 6, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 4.25, 3.0)));
+   graph.connect(1, 7, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 5.25, 2.0)));
+   graph.connect(1, 8, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(2.25, 1.0, 5.25, 3.0)));
    // 9 is connected to 0 and to 2 one
-   graph.connect(9, 0, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(9.0, 9.0, 0.0, 0.0)));
-   graph.connect(9, 1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(9.0, 9.0, 0.1, 0.1)));
+   graph.connect(9, 0, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.5, 5.0, 0.0, 1.0)));
+   graph.connect(9, 1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.5, 5.0, 2.25, 1.0)));
+   
+   msi::cvrp::Vertices vertices;
+   vertices.translate_vert_into_edges(graph);
+
+   msi::cvrp::Opengl opengl;
+   opengl.draw(vertices);
 
    msi::ant_system::Tour tour(graph, r, 20, 10, 0);
    for (std::size_t i = 0; i < 100; ++i) {
@@ -116,5 +116,5 @@ TEST(AntSystem, Hub) {
    graph.print();
 
    // we want ants from vertex 9 to go directly to 0 rather than going though a hub
-   // ASSERT_GT(graph.pheromone(9, 0), graph.pheromone(9, 1));
+   ASSERT_GT(graph.pheromone(9, 0), graph.pheromone(9, 1));
 }
