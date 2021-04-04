@@ -15,11 +15,15 @@ struct Position {
    double x1, y1, x2, y2;
 };
 
+struct Vertice {
+   double x, y, demand;
+};
+
 struct Edge {
    Edge(double _pheromone, double _distance, Position _pos);
    double pheromone;
-   Position pos;
    double distance;
+   Position pos;
 
    [[nodiscard]] constexpr double prob() const noexcept {
       return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
@@ -27,15 +31,21 @@ struct Edge {
 };
 
 using VertId = std::size_t;
+using Table = std::vector<std::vector<double>>;
 
 class Graph {
  public:
+   std::vector<Vertice> m_vertices;
+   std::vector<std::vector<double>> distance_table;
    std::vector<std::optional<Edge>> m_edges;
    std::size_t m_vert_count;
 
    explicit Graph(std::size_t vert_count);
 
+   void import_vertices(Table coordinates_xy, Table demands) noexcept;
+   void compute_distances() noexcept;
    void connect(VertId a, VertId b, Edge e) noexcept;
+   void disconnect(VertId a, VertId b) noexcept;
    void print() const noexcept;
    void for_each_connected(VertId vert, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
    void evaporate() noexcept;
@@ -44,6 +54,7 @@ class Graph {
    [[nodiscard]] double probability_sum(VertId id, std::set<VertId> &except) const;
    [[nodiscard]] double pheromone(VertId a, VertId b) const;
    [[nodiscard]] double distance(VertId a, VertId b) const;
+   [[nodiscard]] double distance_overall() const;
 
    [[nodiscard]] constexpr std::size_t vert_count() const noexcept {
       return m_vert_count;

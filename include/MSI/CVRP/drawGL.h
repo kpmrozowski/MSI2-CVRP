@@ -9,7 +9,7 @@
 
 namespace msi::cvrp {
 
-class Vertices {
+class GraphElements {
 public:
     // struct VertGL {
     //     float x, y;
@@ -20,22 +20,24 @@ public:
     struct {
         float x, y;
         float r, g, b;
-    } point[30000];
+    } point[51];
     struct {
         float x, y;
         float r, g, b;
-    } line[300];
+    } line[198];
     void translate_vert_into_edges(msi::ant_system::Graph& g);
 };
 
 class Opengl {
 public:
-    void draw(msi::cvrp::Vertices& vc);
+    void draw(msi::cvrp::GraphElements& ge);
     static const char* vertex_shader_text;
     static const char* fragment_shader_text;
     static void error_callback(int error, const char* description);
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };
+
+using VertId = std::size_t;
 
 }// namespace msi::cvrp
 

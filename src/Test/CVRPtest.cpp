@@ -17,22 +17,29 @@ class Random : public msi::util::IRandomGenerator {
 };
 
 TEST(CVRP, ReadGraph) {
+   
+   using Table = std::vector<std::vector<double>>;
    Random r;
    msi::cvrp::Reader re;
+   // re.display_file();
    std::size_t rows = 51;
 	std::size_t cols = 3;
-	double **En51k5_NODE_COORD, **En51k5_DEMANDS;
+	Table En51k5_NODE_COORD, En51k5_DEMANDS;
 	En51k5_NODE_COORD = re.read_file("./src/CVRP/E-n51-k5_NODE_COORD.txt",rows,cols);
    cols = 2;
 	En51k5_DEMANDS = re.read_file("./src/CVRP/E-n51-k5_DEMANDS.txt",rows,cols);
    msi::ant_system::Graph graph(rows);
+   graph.import_vertices(En51k5_NODE_COORD, En51k5_DEMANDS);
+   graph.compute_distances();
    // for(std::size_t i = 0; i < rows; i++)
    //    for(std::size_t j = i + 1; j < rows; j++)   
    //       graph.connect(i, j, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][j], En51k5_NODE_COORD[2][j])));
 
-   for(std::size_t i = 0; i < rows-1; i++)
+   for(std::size_t i = 0; i < rows; i++)
       graph.connect(i, i+1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][i+1], En51k5_NODE_COORD[2][i+1])));
    
+   // graph.disconnect(1, 2);
+
    srand(111);
    msi::ant_system::Tour tour(graph, r, 100, 50, 0);
    for (std::size_t i = 0; i < 100; ++i) {
@@ -40,11 +47,13 @@ TEST(CVRP, ReadGraph) {
       tour.reset();
    }
 
-   graph.print();
-   msi::cvrp::Vertices vertices;
-   vertices.translate_vert_into_edges(graph);
+   // graph.print();
+   fmt::print("distance_overall = {:2.4f}\n", graph.distance_overall());
+   fmt::print("size = {}\n", En51k5_NODE_COORD[0].size());
+   
+   msi::cvrp::GraphElements graphElements;
+   graphElements.translate_vert_into_edges(graph);
 
    msi::cvrp::Opengl opengl;
-   opengl.draw(vertices);
-
+   opengl.draw(graphElements);
 }

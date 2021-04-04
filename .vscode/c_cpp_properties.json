@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/kmro/Documents/pw_mini/msi/qtbase/include/**"
+                "/home/kmro/Documents/pw_mini/msi/qtbase/include/**",
+                "${workspaceFolder}/out/build/_deps/fmt-src/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

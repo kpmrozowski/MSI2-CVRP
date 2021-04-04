@@ -3,7 +3,11 @@
 
 namespace msi::ant_system {
 
-Graph::Graph(std::size_t vert_count) : m_edges(vert_count * vert_count), m_vert_count(vert_count) {}
+Graph::Graph(std::size_t vert_count)
+   : m_vertices(vert_count)
+   , distance_table(std::vector<std::vector<double>>(vert_count, std::vector<double> (vert_count)))
+   , m_edges(vert_count * vert_count)
+   , m_vert_count(vert_count) {}
 
 Position::Position(double _x1, double _y1, double _x2, double _y2)
    : x1{_x1}
@@ -12,19 +16,48 @@ Position::Position(double _x1, double _y1, double _x2, double _y2)
    , y2{_y2} {}
 
 Edge::Edge(double _pheromone, double _distance, Position _position)
-: pheromone{_pheromone}
-, distance{_distance}
-, pos{_position} {
+   : pheromone{_pheromone}
+   , distance{_distance}
+   , pos{_position}
+{
    distance = std::pow(std::pow(pos.x2 - pos.x1, 2) + std::pow(pos.y2 - pos.y1, 2), 0.5);
+}
+
+void Graph::import_vertices(Table coordinates_xy, Table demands) noexcept {
+   for(VertId i = 0; i < coordinates_xy[0].size(); i ++) {
+      m_vertices[i].x = coordinates_xy[1][i];
+      m_vertices[i].y = coordinates_xy[2][i];
+      m_vertices[i].demand = demands[1][i];
+   }
+}
+
+void Graph::compute_distances() noexcept {
+   std::vector<double> vt(m_vert_count);
+   for(VertId i = 0; i < m_vert_count; i++)
+      for(VertId j = 0; j < m_vert_count; j++)
+         distance_table[j][i] = sqrt(pow(m_vertices[j].x - m_vertices[i].x, 2) + pow(m_vertices[j].y - m_vertices[i].y, 2));
+   // Print distance_table:
+   // for(VertId i = 0; i < distance_table.size(); i++) {
+   //    for(VertId j = 0; j < distance_table[0].size(); j++)
+   //       fmt::print("{:2.1f} ", distance_table[j][i]);
+   //    fmt::print("\n");
+   // }
 }
 
 void Graph::connect(VertId a, VertId b, Edge e) noexcept {
    if (a >= m_vert_count || b >= m_vert_count) {
       return;
    }
-   // fmt::print("x1={:2.1f} x2={:2.1f} y1={:2.1f} y2={:2.1f} dist={:2.1f}\n", e.pos.x2, e.pos.x1, e.pos.y2, e.pos.y1, e.distance);
    m_edges[a * m_vert_count + b] = e;
    m_edges[b * m_vert_count + a] = e;
+}
+
+void Graph::disconnect(VertId a, VertId b) noexcept {
+   if (a >= m_vert_count || b >= m_vert_count) {
+      return;
+   }
+   m_edges[a * m_vert_count + b].reset();
+   m_edges[b * m_vert_count + a].reset();
 }
 
 void Graph::print() const noexcept {
@@ -32,7 +65,6 @@ void Graph::print() const noexcept {
       fmt::print("vertex connections {}\n", i);
       for_each_connected(i, [](VertId id, const Edge &e) {
          fmt::print(" {}\t(fero: {:2.4f},\tdist: {:2.3})\n", id, e.pheromone, e.distance);
-         // fmt::print("x1={:2.1f} x2={:2.1f} y1={:2.1f} y2={:2.1f} dist={:2.1f}\n", e.pos.x2, e.pos.x1, e.pos.y2, e.pos.y1, e.distance);
          return false;
       });
    }
@@ -87,6 +119,15 @@ double Graph::distance(VertId a, VertId b) const {
       return edge->distance;
    }
    return std::numeric_limits<double>::infinity();
+}
+
+double Graph::distance_overall() const {
+   double distance_overall = 0;
+   for(auto edge : m_edges)
+      if (edge.has_value()) {
+         distance_overall += edge->distance;
+      }
+   return distance_overall;
 }
 
 void Graph::set_pheromone(VertId a, VertId b, double value) {

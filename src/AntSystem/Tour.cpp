@@ -2,10 +2,23 @@
 
 namespace msi::ant_system {
 
-Tour::Tour(Graph &graph, util::IRandomGenerator &rand, std::size_t ant_count, std::size_t passes, VertId target) : m_graph(graph), m_rand(rand), m_ants(ant_count), m_passes(passes), m_target(target) {
-   std::generate(m_ants.begin(), m_ants.end(), [&rand, count = graph.vert_count()]() {
-     return std::make_unique<Ant>(rand, count);
-   });
+Tour::Tour(Graph &graph,
+           util::IRandomGenerator &rand,
+           std::size_t ant_count,
+           std::size_t passes,
+           VertId target)
+   : m_graph(graph)
+   , m_rand(rand)
+   , m_ants(ant_count)
+   , m_passes(passes)
+   , m_target(target)
+{
+   std::generate(m_ants.begin(),
+                 m_ants.end(),
+                 [&rand, count = graph.vert_count()]()
+                 {
+                    return std::make_unique<Ant>(rand, count);
+                 });
 }
 
 void Tour::reset() noexcept {

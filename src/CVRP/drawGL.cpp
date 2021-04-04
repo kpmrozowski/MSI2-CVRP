@@ -3,64 +3,41 @@
 
 namespace msi::cvrp {
 
-void Vertices::translate_vert_into_edges(msi::ant_system::Graph& g) {
-    int ii = 0, jj = 0;
-    for(int aa = 0; aa < g.m_vert_count; aa++)
-        for(int bb = 0; bb < g.m_vert_count; bb++) {
+void GraphElements::translate_vert_into_edges(msi::ant_system::Graph& g) {
+    double scale_x = 2/70.;
+    double translate_x = - 1.4;
+    double scale_y = scale_x;
+    double translate_y = -1.05;
+    for(VertId i = 0; i < g.m_vert_count+1; i++) {
+        this->point[i].x = g.m_vertices[i].x * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
+        this->point[i].y = g.m_vertices[i].y * scale_y + translate_y;
+        this->point[i].r = 1.f;
+        this->point[i].g = 1.f;
+        this->point[i].b = 1.f;
+    }
+    std::size_t ii = 0;
+    for(std::size_t aa = 0; aa < g.m_vert_count-1; aa++)
+        for(std::size_t bb = 0; bb < g.m_vert_count; bb++) {
             auto edge = g.m_edges[aa * g.m_vert_count + bb];
             if (edge.has_value()) {
-                this->point[ii].x = edge->pos.x1 * 2 / 70. - 1.1; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
-                this->point[ii].y = edge->pos.y1 * 2 / 70. - 1.1;
-                this->point[ii].r = 1.f;
-                this->point[ii].g = 1.f;
-                this->point[ii].b = 1.f;
-                ii++;
-                if(ii % 10 == 0) fmt::print("i={} ", ii);
-                this->point[ii].x = edge->pos.x2 * 2 / 70. - 1.1;
-                this->point[ii].y = edge->pos.y2 * 2 / 70. - 1.1;
-                this->point[ii].r = 1.f;
-                this->point[ii].g = 1.f;
-                this->point[ii].b = 1.f;
-                ii++;
-                if(ii % 10 == 0) fmt::print("i={} ", ii);
-            }
-        }
-    fmt::print("\n");
-    for(int aa = 0; aa < g.m_vert_count; aa++)
-        for(int bb = 0; bb < g.m_vert_count; bb++) {
-            auto edge = g.m_edges[aa * g.m_vert_count + bb];
-            if (edge.has_value() && edge->pheromone > 0.4) {
-                this->line[ii].x = edge->pos.x1 * 0.2 - 1;
-                this->line[ii].y = edge->pos.y1 * 0.2 - 1;
-                this->line[ii].r = 0.f;
+                this->line[ii].x = edge->pos.x1 * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
+                this->line[ii].y = edge->pos.y1 * scale_y + translate_y;
+                this->line[ii].r = 1.f;
                 this->line[ii].g = 1.f;
-                this->line[ii].b = 0.f;
-                jj++;
-                if(ii % 10 == 0) fmt::print("j={} ", jj);
-                this->line[ii].x = edge->pos.x2 * 0.2 - 1;
-                this->line[ii].y = edge->pos.y2 * 0.2 - 1;
-                this->line[ii].r = 0.f;
+                this->line[ii].b = 1.f;
+                ii++;
+                this->line[ii].x = edge->pos.x2 * scale_x + translate_x;
+                this->line[ii].y = edge->pos.y2 * scale_y + translate_y;
+                this->line[ii].r = 1.f;
                 this->line[ii].g = 1.f;
-                this->line[ii].b = 0.f;
-                jj++;
-                if(ii % 10 == 0) fmt::print("j={} ", jj);
+                this->line[ii].b = 1.f;
+                ii++;
             }
         }
     fmt::print("\n");
 }
 
-void Opengl::draw(Vertices& vc) {
-    // Dynamic alocation of array to be drawn
-    // VertGL *pointGl;
-    // pointGl = new VertGL[vc.point.size()];
-    // for(int i = 0; i < vc.point.size(); i++) {
-    //     pointGl[i].x = point[i].x;
-    //     pointGl[i].y = point[i].y;
-    //     pointGl[i].r = point[i].r;
-    //     pointGl[i].g = point[i].g;
-    //     pointGl[i].b = point[i].b;
-    // }
-    // VertGL pointgl{*pointGl};
+void Opengl::draw(GraphElements& ge) {
     GLFWwindow* window;
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
     GLint mvp_location, vpos_location, vcol_location;
@@ -118,14 +95,12 @@ void Opengl::draw(Vertices& vc) {
         mat4x4_mul(mvp, p, m);
         glUseProgram(program);
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vc.point), vc.point, GL_STATIC_DRAW);
-        glDrawArrays(GL_POINTS, 0, sizeof(vc.point)/sizeof(vc.point[0]));
-        // glLineWidth(0.5);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vc.point), vc.point, GL_STATIC_DRAW);
-        glDrawArrays(GL_LINES, 0, sizeof(vc.point)/sizeof(vc.point[0]));
-        // glLineWidth(3);
-        // glBufferData(GL_ARRAY_BUFFER, sizeof(vc.line), vc.line, GL_STATIC_DRAW);
-        // glDrawArrays(GL_LINES, 0, sizeof(vc.line)/sizeof(vc.line[0]));
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.point), ge.point, GL_STATIC_DRAW);
+        glDrawArrays(GL_POINTS, 0, sizeof(ge.point)/sizeof(ge.point[0]));
+        glClear(GL_ARRAY_BUFFER);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.line), ge.line, GL_STATIC_DRAW);
+        glDrawArrays(GL_LINES, 0, sizeof(ge.line)/sizeof(ge.line[0]));
+        glClear(GL_ARRAY_BUFFER);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

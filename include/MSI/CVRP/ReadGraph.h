@@ -9,10 +9,10 @@ namespace msi::cvrp {
 
 class Reader {
 public:
-    double** read_file(std::string filename,int rows,int cols);
+    std::vector<std::vector<double>> read_file(std::string filename,int rows,int cols);
     void display_file();
 };
-
+using Table = std::vector<std::vector<double>>;
 }// namespace msi::cvrp
 
 #endif //CVRP_READGRAPH_H
