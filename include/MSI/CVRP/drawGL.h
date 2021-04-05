@@ -24,7 +24,7 @@ public:
     struct {
         float x, y;
         float r, g, b;
-    } line[198];
+    } line[318];
     void translate_vert_into_edges(msi::ant_system::Graph& g);
 };
 

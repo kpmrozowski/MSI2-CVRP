@@ -31,12 +31,12 @@ TEST(CVRP, ReadGraph) {
    msi::ant_system::Graph graph(rows);
    graph.import_vertices(En51k5_NODE_COORD, En51k5_DEMANDS);
    graph.compute_distances();
-   // for(std::size_t i = 0; i < rows; i++)
-   //    for(std::size_t j = i + 1; j < rows; j++)   
-   //       graph.connect(i, j, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][j], En51k5_NODE_COORD[2][j])));
-
    for(std::size_t i = 0; i < rows; i++)
-      graph.connect(i, i+1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][i+1], En51k5_NODE_COORD[2][i+1])));
+      for(std::size_t j = i + 1; j < rows; j++)   
+         graph.connect(i, j, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][j], En51k5_NODE_COORD[2][j])));
+
+   // for(std::size_t i = 0; i < rows; i++)
+      // graph.connect(i, i+1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(En51k5_NODE_COORD[1][i], En51k5_NODE_COORD[2][i], En51k5_NODE_COORD[1][i+1], En51k5_NODE_COORD[2][i+1])));
    
    // graph.disconnect(1, 2);
 
@@ -47,7 +47,7 @@ TEST(CVRP, ReadGraph) {
       tour.reset();
    }
 
-   // graph.print();
+   graph.print();
    fmt::print("distance_overall = {:2.4f}\n", graph.distance_overall());
    fmt::print("size = {}\n", En51k5_NODE_COORD[0].size());
    

@@ -11,27 +11,29 @@ void GraphElements::translate_vert_into_edges(msi::ant_system::Graph& g) {
     for(VertId i = 0; i < g.m_vert_count+1; i++) {
         this->point[i].x = g.m_vertices[i].x * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
         this->point[i].y = g.m_vertices[i].y * scale_y + translate_y;
-        this->point[i].r = 1.f;
+        this->point[i].r = 0.f;
         this->point[i].g = 1.f;
-        this->point[i].b = 1.f;
+        this->point[i].b = 0.f;
     }
     std::size_t ii = 0;
     for(std::size_t aa = 0; aa < g.m_vert_count-1; aa++)
         for(std::size_t bb = 0; bb < g.m_vert_count; bb++) {
             auto edge = g.m_edges[aa * g.m_vert_count + bb];
-            if (edge.has_value()) {
+            if (edge.has_value() && edge->pheromone > 0.15) {
                 this->line[ii].x = edge->pos.x1 * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
                 this->line[ii].y = edge->pos.y1 * scale_y + translate_y;
                 this->line[ii].r = 1.f;
                 this->line[ii].g = 1.f;
                 this->line[ii].b = 1.f;
                 ii++;
+                // fmt::print("{} ", ii);
                 this->line[ii].x = edge->pos.x2 * scale_x + translate_x;
                 this->line[ii].y = edge->pos.y2 * scale_y + translate_y;
                 this->line[ii].r = 1.f;
                 this->line[ii].g = 1.f;
                 this->line[ii].b = 1.f;
                 ii++;
+                // fmt::print("{} ", ii);
             }
         }
     fmt::print("\n");
@@ -79,7 +81,7 @@ void Opengl::draw(GraphElements& ge) {
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
                           sizeof(float) * 5, (void*) (sizeof(float) * 2));
     glEnable(GL_PROGRAM_POINT_SIZE);
-    glPointSize(10);
+    glPointSize(15);
     while (!glfwWindowShouldClose(window))
     {
         float ratio;
@@ -95,11 +97,11 @@ void Opengl::draw(GraphElements& ge) {
         mat4x4_mul(mvp, p, m);
         glUseProgram(program);
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.point), ge.point, GL_STATIC_DRAW);
-        glDrawArrays(GL_POINTS, 0, sizeof(ge.point)/sizeof(ge.point[0]));
-        glClear(GL_ARRAY_BUFFER);
         glBufferData(GL_ARRAY_BUFFER, sizeof(ge.line), ge.line, GL_STATIC_DRAW);
         glDrawArrays(GL_LINES, 0, sizeof(ge.line)/sizeof(ge.line[0]));
+        glClear(GL_ARRAY_BUFFER);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.point), ge.point, GL_STATIC_DRAW);
+        glDrawArrays(GL_POINTS, 0, sizeof(ge.point)/sizeof(ge.point[0]));
         glClear(GL_ARRAY_BUFFER);
         glfwSwapBuffers(window);
         glfwPollEvents();
