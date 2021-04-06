@@ -42,7 +42,7 @@ struct FrameBufferInfo {
    bool updated;
 };
 
-void windowUpdateCallback(GLFWwindow *wnd, int width, int height) {
+void windowResizeCallback(GLFWwindow *wnd, int width, int height) {
    auto info = reinterpret_cast<FrameBufferInfo *>(glfwGetWindowUserPointer(wnd));
    info->width = width;
    info->height = height;
@@ -66,6 +66,7 @@ void Opengl::draw(GraphElements &ge) {
       exit(EXIT_FAILURE);
    }
    glfwSetWindowUserPointer(window, &info);
+   glfwSetFramebufferSizeCallback(window, windowResizeCallback);
    glfwSetKeyCallback(window, key_callback);
    glfwMakeContextCurrent(window);
    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
