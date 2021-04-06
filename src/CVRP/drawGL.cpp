@@ -37,103 +37,119 @@ void GraphElements::translate_vert_into_edges(msi::cvrp::Tour& tour) {
     fmt::print("\n");
 }
 
-void Opengl::draw(GraphElements& ge) {
-    GLFWwindow* window;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location, vcol_location;
-    glfwSetErrorCallback(error_callback);
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(1280, 960, "ACO-CVRP graph", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-    glfwSetKeyCallback(window, key_callback);
-    glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval(1);
-    // NOTE: OpenGL error checks have been omitted for brevity
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    mvp_location = glGetUniformLocation(program, "MVP");
-    vpos_location = glGetAttribLocation(program, "vPos");
-    vcol_location = glGetAttribLocation(program, "vCol");
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(float) * 5, (void*) 0);
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(float) * 5, (void*) (sizeof(float) * 2));
-    glEnable(GL_PROGRAM_POINT_SIZE);
-    glPointSize(15);
-    while (!glfwWindowShouldClose(window))
-    {
-        float ratio;
-        int width, height;
-        mat4x4 m, p, mvp;
-        glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-        mat4x4_identity(m);
-        // mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        mat4x4_mul(mvp, p, m);
-        glUseProgram(program);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.line), ge.line, GL_STATIC_DRAW);
-        glDrawArrays(GL_LINES, 0, sizeof(ge.line)/sizeof(ge.line[0]));
-        glClear(GL_ARRAY_BUFFER);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(ge.point), ge.point, GL_STATIC_DRAW);
-        glDrawArrays(GL_POINTS, 0, sizeof(ge.point)/sizeof(ge.point[0]));
-        glClear(GL_ARRAY_BUFFER);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    exit(EXIT_SUCCESS);
+struct FrameBufferInfo {
+   GLuint width, height;
+   bool updated;
+};
+
+void windowResizeCallback(GLFWwindow *wnd, int width, int height) {
+   auto info = reinterpret_cast<FrameBufferInfo *>(glfwGetWindowUserPointer(wnd));
+   info->width = width;
+   info->height = height;
+   info->updated = true;
 }
 
-const char* Opengl::vertex_shader_text =
-    "uniform mat4 MVP;\n"
-    "attribute vec3 vCol;\n"
-    "attribute vec2 vPos;\n"
-    "varying vec3 color;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-    "    color = vCol;\n"
-    "}\n";
+void Opengl::draw(GraphElements &ge) {
+   GLFWwindow *window;
+   GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+   GLint mvp_location, vpos_location, vcol_location;
+   glfwSetErrorCallback(error_callback);
+   if (!glfwInit())
+      exit(EXIT_FAILURE);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-const char* Opengl::fragment_shader_text =
-    "varying vec3 color;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_FragColor = vec4(color, 1.0);\n"
-    "}\n";
+   FrameBufferInfo info{1280, 960, true};
+   window = glfwCreateWindow(info.width, info.height, "ACO-CVRP graph", NULL, NULL);
+   if (!window) {
+      glfwTerminate();
+      exit(EXIT_FAILURE);
+   }
+   glfwSetWindowUserPointer(window, &info);
+   glfwSetFramebufferSizeCallback(window, windowResizeCallback);
+   glfwSetKeyCallback(window, key_callback);
+   glfwMakeContextCurrent(window);
+   gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+   glfwSwapInterval(1);
+   // NOTE: OpenGL error checks have been omitted for brevity
+   glGenBuffers(1, &vertex_buffer);
+   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+   vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+   glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+   glCompileShader(vertex_shader);
+   fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+   glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+   glCompileShader(fragment_shader);
+   program = glCreateProgram();
+   glAttachShader(program, vertex_shader);
+   glAttachShader(program, fragment_shader);
+   glLinkProgram(program);
+   mvp_location = glGetUniformLocation(program, "MVP");
+   vpos_location = glGetAttribLocation(program, "vPos");
+   vcol_location = glGetAttribLocation(program, "vCol");
+   glEnableVertexAttribArray(vpos_location);
+   glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
+                         sizeof(float) * 5, (void *) 0);
+   glEnableVertexAttribArray(vcol_location);
+   glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
+                         sizeof(float) * 5, (void *) (sizeof(float) * 2));
+   glEnable(GL_PROGRAM_POINT_SIZE);
+   glPointSize(15);
+   glUseProgram(program);
 
-void Opengl::error_callback(int error, const char* description) {
-    fprintf(stderr, "Error: %s\n", description);
+   while (!glfwWindowShouldClose(window)) {
+      if (info.updated) {
+         mat4x4 m, p, mvp;
+         auto ratio = info.width / static_cast<float>(info.height);
+         glViewport(0, 0, info.width, info.height);
+         mat4x4_identity(m);
+         mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+         mat4x4_mul(mvp, p, m);
+         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat *) mvp);
+
+         info.updated = false;
+      }
+
+      glClear(GL_COLOR_BUFFER_BIT);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(ge.line), ge.line, GL_STATIC_DRAW);
+      glDrawArrays(GL_LINES, 0, sizeof(ge.line) / sizeof(ge.line[0]));
+      glClear(GL_ARRAY_BUFFER);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(ge.point), ge.point, GL_STATIC_DRAW);
+      glDrawArrays(GL_POINTS, 0, sizeof(ge.point) / sizeof(ge.point[0]));
+      glClear(GL_ARRAY_BUFFER);
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+   }
+   glfwDestroyWindow(window);
+   glfwTerminate();
+   exit(EXIT_SUCCESS);
 }
 
-void Opengl::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+const char *Opengl::vertex_shader_text =
+        "uniform mat4 MVP;\n"
+        "attribute vec3 vCol;\n"
+        "attribute vec2 vPos;\n"
+        "varying vec3 color;\n"
+        "void main()\n"
+        "{\n"
+        "    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+        "    color = vCol;\n"
+        "}\n";
+
+const char *Opengl::fragment_shader_text =
+        "varying vec3 color;\n"
+        "void main()\n"
+        "{\n"
+        "    gl_FragColor = vec4(color, 1.0);\n"
+        "}\n";
+
+void Opengl::error_callback(int error, const char *description) {
+   fprintf(stderr, "Error: %s\n", description);
+}
+
+void Opengl::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 }// namespace msi::cvrp
