@@ -2,14 +2,14 @@
 #define CVRP_READGRAPH_H
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <string_view>
 #include <fmt/core.h>
 
-namespace msi::cvrp {
+namespace msi::util {
 
 class Reader {
 public:
-    std::vector<std::vector<double>> read_file(std::string filename,int rows,int cols);
+    std::vector<std::vector<double>> read_file(std::string_view filename,int rows,int cols);
     void display_file();
 };
 using Table = std::vector<std::vector<double>>;

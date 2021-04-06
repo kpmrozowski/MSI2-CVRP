@@ -1,5 +1,5 @@
-#ifndef ANT_GRAPH_H
-#define ANT_GRAPH_H
+#ifndef CVRP_GRAPH_H
+#define CVRP_GRAPH_H
 #include "Constants.h"
 #include <cmath>
 #include <cstdint>
@@ -8,7 +8,7 @@
 #include <set>
 #include <vector>
 
-namespace msi::ant_system {
+namespace msi::cvrp {
 
 struct Position {
    Position(double _x1, double _y1, double _x2, double _y2);
@@ -20,7 +20,7 @@ struct Vertice {
 };
 
 struct Edge {
-   Edge(double _pheromone, double _distance, Position _pos);
+   Edge(double _pheromone, Position _pos);
    double pheromone;
    double distance;
    Position pos;
@@ -34,11 +34,12 @@ using VertId = std::size_t;
 using Table = std::vector<std::vector<double>>;
 
 class Graph {
+   std::size_t m_vert_count;
  public:
    std::vector<Vertice> m_vertices;
    std::vector<std::vector<double>> m_distance_table;
    std::vector<std::optional<Edge>> m_edges;
-   std::size_t m_vert_count;
+   // std::set<VertId> feasible_verts_set;
 
    explicit Graph(std::size_t vert_count);
 
@@ -48,6 +49,7 @@ class Graph {
    void disconnect(VertId a, VertId b) noexcept;
    void print() const noexcept;
    void for_each_connected(VertId vert, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
+   void for_each_feasible(VertId vert, std::vector<bool> feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
    void evaporate() noexcept;
    void set_pheromone(VertId a, VertId b, double value);
    void add_pheromone(VertId a, VertId b, double value);
@@ -61,6 +63,6 @@ class Graph {
    }
 };
 
-}// namespace msi::ant_system
+}// namespace msi::cvrp
 
-#endif//ANT_GRAPH_H
+#endif//CVRP_GRAPH_H

@@ -1,5 +1,5 @@
-#ifndef CVRP_TOUR_H
-#define CVRP_TOUR_H
+#ifndef ANT_TOUR_H
+#define ANT_TOUR_H
 #include "../Util/IRandomGenerator.h"
 #include "Ant.h"
 #include "Graph.h"
@@ -18,10 +18,10 @@ class Tour {
  public:
    Tour(Graph &graph, util::IRandomGenerator &rand, std::size_t ant_count, std::size_t passes, VertId target);
 
-   void reset() noexcept;
+   void reset_vechicles() noexcept;
    void run() noexcept;
 };
 
 }// namespace msi::ant_system
 
-#endif//CVRP_TOUR_H
+#endif//ANT_TOUR_H

@@ -21,7 +21,7 @@ Tour::Tour(Graph &graph,
                  });
 }
 
-void Tour::reset() noexcept {
+void Tour::reset_vechicles() noexcept {
    std::generate(m_ants.begin(), m_ants.end(), [this]() {
      return std::make_unique<Ant>(m_rand, m_graph.vert_count());
    });

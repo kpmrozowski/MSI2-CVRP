@@ -1,5 +1,5 @@
-#ifndef CVRP_CONSTANTS_H
-#define CVRP_CONSTANTS_H
+#ifndef ANT_CONSTANTS_H
+#define ANT_CONSTANTS_H
 
 namespace msi::ant_system {
 
@@ -9,4 +9,4 @@ constexpr double g_evapor = 0.95;
 
 }
 
-#endif//CVRP_CONSTANTS_H
+#endif//ANT_CONSTANTS_H

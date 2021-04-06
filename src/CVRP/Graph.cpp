@@ -1,13 +1,13 @@
-#include <MSI/AntSystem/Graph.h>
+#include <MSI/CVRP/Graph.h>
 #include <fmt/core.h>
 
-namespace msi::ant_system {
+namespace msi::cvrp {
 
 Graph::Graph(std::size_t vert_count)
-   : m_vertices(vert_count)
+   : m_vert_count(vert_count)
+   , m_vertices(vert_count)
    , m_distance_table(std::vector<std::vector<double>>(vert_count, std::vector<double> (vert_count)))
-   , m_edges(vert_count * vert_count)
-   , m_vert_count(vert_count) {}
+   , m_edges(vert_count * vert_count) {}
 
 Position::Position(double _x1, double _y1, double _x2, double _y2)
    : x1{_x1}
@@ -15,9 +15,8 @@ Position::Position(double _x1, double _y1, double _x2, double _y2)
    , x2{_x2}
    , y2{_y2} {}
 
-Edge::Edge(double _pheromone, double _distance, Position _position)
+Edge::Edge(double _pheromone, Position _position)
    : pheromone{_pheromone}
-   , distance{_distance}
    , pos{_position}
 {
    distance = std::pow(std::pow(pos.x2 - pos.x1, 2) + std::pow(pos.y2 - pos.y1, 2), 0.5);
@@ -25,9 +24,17 @@ Edge::Edge(double _pheromone, double _distance, Position _position)
 
 void Graph::import_vertices(Table coordinates_xy, Table demands) noexcept {
    for(VertId i = 0; i < coordinates_xy[0].size(); i ++) {
-      m_vertices[i].x = coordinates_xy[1][i];
-      m_vertices[i].y = coordinates_xy[2][i];
-      m_vertices[i].demand = demands[1][i];
+      this->m_vertices[i].x = coordinates_xy[1][i];
+      this->m_vertices[i].y = coordinates_xy[2][i];
+      this->m_vertices[i].demand = demands[1][i];
+      // fmt::print("{}\t", i);
+      // fmt::print("{}\t", m_vertices[i].x);
+      // fmt::print("{}\t", m_vertices[i].y);
+      // fmt::print("{}\n", m_vertices[i].demand);
+      // std::printf("%d\t", i);
+      // std::printf("%f\t", m_vertices[i].x);
+      // std::printf("%f\t", m_vertices[i].y);
+      // std::printf("%f\n", m_vertices[i].demand);
    }
 }
 
@@ -35,7 +42,7 @@ void Graph::compute_distances() noexcept {
    std::vector<double> vt(m_vert_count);
    for(VertId i = 0; i < m_vert_count; i++)
       for(VertId j = 0; j < m_vert_count; j++)
-         m_distance_table[j][i] = sqrt(pow(m_vertices[j].x - m_vertices[i].x, 2) + pow(m_vertices[j].y - m_vertices[i].y, 2));
+         this->m_distance_table[j][i] = sqrt(pow(m_vertices[j].x - m_vertices[i].x, 2) + pow(m_vertices[j].y - m_vertices[i].y, 2));
    // Print m_distance_table:
    // for(VertId i = 0; i < m_distance_table.size(); i++) {
    //    for(VertId j = 0; j < m_distance_table[0].size(); j++)
@@ -80,7 +87,26 @@ void Graph::for_each_connected(VertId vert, const std::function<bool(VertId, con
    for (VertId i = 0; i < m_vert_count && at != end; ++i) {
       if (at->has_value()) {
          if (callback(i, at->value())) {
-            return;
+               return;
+         }
+      }
+      ++at;
+   }
+}
+
+void Graph::for_each_feasible(VertId vert, std::vector<bool> feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept {
+   if (vert >= m_vert_count) {
+      return;
+   }
+
+   auto at = m_edges.begin() + vert * m_vert_count;
+   auto end = m_edges.begin() + (vert + 1) * m_vert_count;
+   for (VertId i = 0; i < m_vert_count && at != end; ++i) {
+      if (at->has_value()) {
+         if (feasible_verts[i]){
+            if (callback(i, at->value())) {
+               return;
+            }
          }
       }
       ++at;
@@ -163,4 +189,4 @@ double find_shortest_path(Graph &g, VertId from, VertId to) {
    return distances[from + g.vert_count() * to];
 }
 
-}// namespace msi::ant_system
+}// namespace msi::cvrp

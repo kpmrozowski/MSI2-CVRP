@@ -5,18 +5,12 @@
 #include "linmath.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <MSI/AntSystem/Tour.h>
+#include <MSI/CVRP/CVRP.h>
 
-namespace msi::cvrp {
+namespace msi::util {
 
 class GraphElements {
 public:
-    // struct VertGL {
-    //     float x, y;
-    //     float r, g, b;
-    // };
-    // std::vector<VertGL> point;
-    // std::vector<VertGL> line;
     struct {
         float x, y;
         float r, g, b;
@@ -24,13 +18,13 @@ public:
     struct {
         float x, y;
         float r, g, b;
-    } line[318];
-    void translate_vert_into_edges(msi::ant_system::Graph& g);
+    } line[110];
+    void translate_vert_into_edges(msi::cvrp::Tour& tour);
 };
 
 class Opengl {
 public:
-    void draw(msi::cvrp::GraphElements& ge);
+    void draw(GraphElements& ge);
     static const char* vertex_shader_text;
     static const char* fragment_shader_text;
     static void error_callback(int error, const char* description);

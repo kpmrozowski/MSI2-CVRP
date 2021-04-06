@@ -1,5 +1,5 @@
-#ifndef CVRP_ANT_H
-#define CVRP_ANT_H
+#ifndef ANT_ANT_H
+#define ANT_ANT_H
 #include "Graph.h"
 #include "../Util/IRandomGenerator.h"
 #include <vector>
@@ -27,4 +27,4 @@ class Ant {
 
 }
 
-#endif//CVRP_ANT_H
+#endif//ANT_ANT_H

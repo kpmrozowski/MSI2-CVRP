@@ -1,41 +1,39 @@
-#include <MSI/CVRP/drawGL.h>
+#include <MSI/Util/drawGL.h>
 #include <fmt/core.h>
 
-namespace msi::cvrp {
+namespace msi::util {
 
-void GraphElements::translate_vert_into_edges(msi::ant_system::Graph& g) {
+void GraphElements::translate_vert_into_edges(msi::cvrp::Tour& tour) {
     double scale_x = 2/70.;
     double translate_x = - 1.4;
     double scale_y = scale_x;
     double translate_y = -1.05;
-    for(VertId i = 0; i < g.m_vert_count+1; i++) {
-        this->point[i].x = g.m_vertices[i].x * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
-        this->point[i].y = g.m_vertices[i].y * scale_y + translate_y;
+    for(VertId i = 0; i < tour.m_graph.vert_count()+1; i++) {
+        this->point[i].x = tour.m_graph.m_vertices[i].x * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
+        this->point[i].y = tour.m_graph.m_vertices[i].y * scale_y + translate_y;
         this->point[i].r = 0.f;
         this->point[i].g = 1.f;
         this->point[i].b = 0.f;
     }
+
     std::size_t ii = 0;
-    for(std::size_t aa = 0; aa < g.m_vert_count-1; aa++)
-        for(std::size_t bb = 0; bb < g.m_vert_count; bb++) {
-            auto edge = g.m_edges[aa * g.m_vert_count + bb];
-            if (edge.has_value() && edge->pheromone > 0.15) {
-                this->line[ii].x = edge->pos.x1 * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
-                this->line[ii].y = edge->pos.y1 * scale_y + translate_y;
-                this->line[ii].r = 1.f;
-                this->line[ii].g = 1.f;
-                this->line[ii].b = 1.f;
-                ii++;
-                // fmt::print("{} ", ii);
-                this->line[ii].x = edge->pos.x2 * scale_x + translate_x;
-                this->line[ii].y = edge->pos.y2 * scale_y + translate_y;
-                this->line[ii].r = 1.f;
-                this->line[ii].g = 1.f;
-                this->line[ii].b = 1.f;
-                ii++;
-                // fmt::print("{} ", ii);
-            }
-        }
+    double dist = 0;
+    for(auto e : tour.best_vechicle().m_visited_edges) {
+        this->line[ii].x = tour.m_graph.m_vertices[e.first].x * scale_x + translate_x; //{for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
+        this->line[ii].y = tour.m_graph.m_vertices[e.first].y * scale_y + translate_y;
+        this->line[ii].r = 1.f;
+        this->line[ii].g = 1.f;
+        this->line[ii].b = 1.f;
+        ii++;
+        // fmt::print("{} ", ii);
+        this->line[ii].x = tour.m_graph.m_vertices[e.second].x * scale_x + translate_x;
+        this->line[ii].y = tour.m_graph.m_vertices[e.second].y * scale_y + translate_y;
+        this->line[ii].r = 1.f;
+        this->line[ii].g = 1.f;
+        this->line[ii].b = 1.f;
+        ii++;
+        // fmt::print("{} ", ii);
+    }
     fmt::print("\n");
 }
 

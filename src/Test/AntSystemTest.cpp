@@ -1,4 +1,5 @@
-#include <MSI/CVRP/drawGL.h>
+#include <MSI/Util/drawGL.h>
+#include <MSI/AntSystem/Tour.h>
 #include <MSI/Util/IRandomGenerator.h>
 #include <gtest/gtest.h>
 
@@ -28,7 +29,7 @@ TEST(AntSystem, BasicGraph) {
    msi::ant_system::Tour tour(graph, r, 100, 6, 5);
    for (std::size_t i = 0; i < 10; ++i) {
       tour.run();
-      tour.reset();
+      tour.reset_vechicles();
    }
 
    ASSERT_GT(graph.pheromone(0, 1), graph.pheromone(0, 2));
@@ -72,7 +73,7 @@ TEST(AntSystem, RandomGraph) {
    msi::ant_system::Tour tour(graph, r, 100, 50, 0);
    for (std::size_t i = 0; i < 100; ++i) {
       tour.run();
-      tour.reset();
+      tour.reset_vechicles();
    }
 
    graph.print();
@@ -100,17 +101,11 @@ TEST(AntSystem, Hub) {
    // 9 is connected to 0 and to 2 one
    graph.connect(9, 0, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.5, 5.0, 0.0, 1.0)));
    graph.connect(9, 1, msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(0.5, 5.0, 2.25, 1.0)));
-   
-   msi::cvrp::Vertices vertices;
-   vertices.translate_vert_into_edges(graph);
-
-   msi::cvrp::Opengl opengl;
-   opengl.draw(vertices);
 
    msi::ant_system::Tour tour(graph, r, 20, 10, 0);
    for (std::size_t i = 0; i < 100; ++i) {
       tour.run();
-      tour.reset();
+      tour.reset_vechicles();
    }
 
    graph.print();
