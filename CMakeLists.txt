@@ -74,4 +74,5 @@ include_directories(./include)
 
 add_subdirectory(src/AntSystem)
 add_subdirectory(src/CVRP)
+add_subdirectory(src/Evolution)
 add_subdirectory(src/Test)
