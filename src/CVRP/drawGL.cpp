@@ -8,7 +8,7 @@ void GraphElements::translate_vert_into_edges(msi::cvrp::Tour& tour) {
     double translate_x = - 1.4;
     double scale_y = scale_x;
     double translate_y = -1.05;
-    for(VertId i = 0; i < tour.m_graph.vert_count()+1; i++) {
+    for(VertId i = 0; i < tour.m_graph.vertex_count()+1; i++) {
         this->point[i].x = tour.m_graph.m_vertices[i].x * scale_x + translate_x; // {for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
         this->point[i].y = tour.m_graph.m_vertices[i].y * scale_y + translate_y;
         this->point[i].r = 0.f;
@@ -18,7 +18,7 @@ void GraphElements::translate_vert_into_edges(msi::cvrp::Tour& tour) {
 
     std::size_t ii = 0;
     double dist = 0;
-    for(auto e : tour.best_vechicle().m_visited_edges) {
+    for(auto e : tour.best_vehicle().m_visited_edges) {
         this->line[ii].x = tour.m_graph.m_vertices[e.first].x * scale_x + translate_x; //{for 0<x<10 and 0<y<10: " * 0.2 - 1; " }
         this->line[ii].y = tour.m_graph.m_vertices[e.first].y * scale_y + translate_y;
         this->line[ii].r = 1.f;
