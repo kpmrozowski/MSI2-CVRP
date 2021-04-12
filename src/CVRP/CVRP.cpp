@@ -39,5 +39,35 @@ void CVRP::start_cvrp() noexcept {
    opengl.draw(graphElements);
 }
 
+double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
+   srand(time(0));
+   Tour tour(graph, params, rand);
+   for (std::size_t i = 0; i < params.iterations; ++i) {
+      tour.run();
+   }
+   return tour.shortest_distance();
+}
+
+Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {
+   msi::util::Reader re;
+   std::size_t rows = 51;
+   std::size_t cols = 3;
+
+   auto coords = re.read_file(fn_coords, rows, cols);
+   cols = 2;
+   auto demands = re.read_file(fn_demands, rows, cols);
+
+   Graph graph(params, rows);
+   graph.import_vertices(coords, demands);
+   graph.compute_distances();
+
+   for (std::size_t i = 0; i < rows; i++) {
+      for (std::size_t j = i + 1; j < rows; j++) {
+         graph.connect(i, j, Edge(1.0, Position(coords[1][i], coords[2][i], coords[1][j], coords[2][j])));
+      }
+   }
+
+   return graph;
+}
 
 }// namespace msi::cvrp

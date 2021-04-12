@@ -2,8 +2,8 @@
 
 namespace msi::evolution {
 
-constexpr auto g_population_size = 10;
-constexpr auto g_iteration_count = 10;
+constexpr auto g_population_size = 12;
+constexpr auto g_iteration_count = 12;
 constexpr auto g_mutation = 0.8;
 constexpr auto g_cross = 0.2;
 
