@@ -34,7 +34,6 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
                  mutate(constraint.beta.min, constraint.beta.max, chosen[0].beta, chosen[1].beta, chosen[2].beta),
                  mutate(constraint.evaporation_rate.min, constraint.evaporation_rate.max, chosen[0].evaporation_rate, chosen[1].evaporation_rate, chosen[2].evaporation_rate),
          };
-         auto mutant_fitness = objective_function(mutant);
 
          if (rand.next_double(1.0) < g_cross) {
             mutant.alpha = population[p].alpha;
@@ -45,6 +44,8 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
          if (rand.next_double(1.0) < g_cross) {
             mutant.evaporation_rate = population[p].evaporation_rate;
          }
+
+         auto mutant_fitness = objective_function(mutant);
 
          if (mutant_fitness < fitness[p]) {
             fitness[p] = mutant_fitness;

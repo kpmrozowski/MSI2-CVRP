@@ -14,6 +14,7 @@ class Tour {
    Params &m_params;
    std::size_t m_passes;
    VertexId m_target;
+   double m_min_distance = std::numeric_limits<double>::infinity();
 
  public:
    Graph &m_graph;
@@ -30,6 +31,10 @@ class Tour {
    void update_pheromone() noexcept;
    [[nodiscard]] double shortest_distance() noexcept;
    [[nodiscard]] const Vehicle &best_vehicle() const noexcept;
+
+   [[nodiscard]] constexpr double min_distance() const noexcept {
+      return m_min_distance;
+   };
 };
 
 }// namespace msi::cvrp

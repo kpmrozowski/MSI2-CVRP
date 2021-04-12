@@ -45,7 +45,7 @@ double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
    for (std::size_t i = 0; i < params.iterations; ++i) {
       tour.run();
    }
-   return tour.shortest_distance();
+   return tour.min_distance();
 }
 
 Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {

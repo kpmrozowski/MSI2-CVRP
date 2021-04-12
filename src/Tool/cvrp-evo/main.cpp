@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
    msi::util::Random rand;
    msi::cvrp::Params params;
    msi::evolution::Constraint constraint{
-           {1.0, 2.0},
-           {2.0, 5.0},
-           {0.9, 0.99},
+           {0.8, 2.0},
+           {1.6, 5.0},
+           {0.85, 0.99},
    };
 
    auto result = msi::evolution::FindOptimal(rand, make_objective_function(rand, params, input_files[0], input_files[1]), constraint);

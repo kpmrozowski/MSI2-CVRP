@@ -67,7 +67,12 @@ void Tour::run() noexcept {
 
       this->update_pheromone();
    }
-   fmt::print("{}\n", this->shortest_distance());
+
+   auto dist = shortest_distance();
+   if (dist < m_min_distance) {
+      m_min_distance = dist;
+   }
+   fmt::print("{}\n", dist);
 }
 
 double Tour::shortest_distance() noexcept {
