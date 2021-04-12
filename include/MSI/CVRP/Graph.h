@@ -1,6 +1,6 @@
 #ifndef CVRP_GRAPH_H
 #define CVRP_GRAPH_H
-#include "Constants.h"
+#include "Params.h"
 #include <cmath>
 #include <cstdint>
 #include <functional>
@@ -20,46 +20,47 @@ struct Vertice {
 };
 
 struct Edge {
-   Edge(double _pheromone, Position _pos);
-   double pheromone;
-   double distance;
-   Position pos;
+   Edge(double pheromone, Position pos);
+   Position m_position;
+   double m_pheromone;
+   double m_distance;
 
-   [[nodiscard]] constexpr double prob() const noexcept {
-      return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
+   [[nodiscard]] constexpr double prob(const Params &params) const noexcept {
+      return std::pow(m_pheromone, params.alpha) * std::pow(1.0 / m_distance, params.beta);
    }
 };
 
-using VertId = std::size_t;
+using VertexId = std::size_t;
 using Table = std::vector<std::vector<double>>;
 
 class Graph {
-   std::size_t m_vert_count;
+   std::size_t m_vertex_count;
+
  public:
    std::vector<Vertice> m_vertices;
    std::vector<std::vector<double>> m_distance_table;
    std::vector<std::optional<Edge>> m_edges;
-   // std::set<VertId> feasible_verts_set;
+   const Params &m_params;
 
-   explicit Graph(std::size_t vert_count);
+   explicit Graph(const Params &params, std::size_t vert_count);
 
    void import_vertices(Table coordinates_xy, Table demands) noexcept;
    void compute_distances() noexcept;
-   void connect(VertId a, VertId b, Edge e) noexcept;
-   void disconnect(VertId a, VertId b) noexcept;
+   void connect(VertexId a, VertexId b, Edge e) noexcept;
+   void disconnect(VertexId a, VertexId b) noexcept;
    void print() const noexcept;
-   void for_each_connected(VertId vert, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
-   void for_each_feasible(VertId vert, std::vector<bool> feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
+   void for_each_connected(VertexId vert, const std::function<bool(VertexId, const Edge &)> &callback) const noexcept;
+   void for_each_feasible(VertexId vertex, const std::vector<bool> &feasible_vertices, const std::function<bool(VertexId, const Edge &)> &callback) const noexcept;
    void evaporate() noexcept;
-   void set_pheromone(VertId a, VertId b, double value);
-   void add_pheromone(VertId a, VertId b, double value);
-   [[nodiscard]] double probability_sum(VertId id, std::set<VertId> &except) const;
-   [[nodiscard]] double pheromone(VertId a, VertId b) const;
-   [[nodiscard]] double distance(VertId a, VertId b) const;
+   void set_pheromone(VertexId a, VertexId b, double value);
+   void add_pheromone(VertexId a, VertexId b, double value);
+   [[nodiscard]] double probability_sum(VertexId id, std::set<VertexId> &except) const;
+   [[nodiscard]] double pheromone(VertexId a, VertexId b) const;
+   [[nodiscard]] double distance(VertexId a, VertexId b) const;
    [[nodiscard]] double distance_overall() const;
 
-   [[nodiscard]] constexpr std::size_t vert_count() const noexcept {
-      return m_vert_count;
+   [[nodiscard]] constexpr std::size_t vertex_count() const noexcept {
+      return m_vertex_count;
    }
 };
 
