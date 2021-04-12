@@ -94,7 +94,7 @@ void Graph::for_each_connected(VertId vert, const std::function<bool(VertId, con
    }
 }
 
-void Graph::for_each_feasible(VertId vert, std::vector<bool> feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept {
+void Graph::for_each_feasible(VertId vert, std::vector<bool>& feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept {
    if (vert >= m_vert_count) {
       return;
    }

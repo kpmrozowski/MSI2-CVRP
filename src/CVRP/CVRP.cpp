@@ -24,9 +24,17 @@ void CVRP::start_cvrp() noexcept {
 
    srand(111);
    Tour tour(graph, r);//, 100, 50, 0);
+   double shortest_distance = 10e4;
    for(std::size_t iter_n = 0; iter_n < g_iterations; ++iter_n) {
+       double distance = tour.shortest_distance();
+       if(shortest_distance > distance && distance != 0) {
+           shortest_distance = tour.shortest_distance();
+           fmt::print("{}\t##########\t{:0.3f}\n", iter_n, tour.shortest_distance());
+       }
+    //    fmt::print("{:0.3f}\n", tour.shortest_distance());
        tour.run();
    }
+//    tour.m_vechicles
 
    // graph.print();
    

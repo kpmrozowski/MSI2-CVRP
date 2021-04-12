@@ -22,32 +22,25 @@ double Vechicle::traveled_distance(Graph &g) noexcept {
    return dist;
 }
 
-VertId Vechicle::choose_next(Graph &g, util::IRandomGenerator &rand, std::vector<bool> feasible_verts) noexcept {
-   auto prob_target = rand.next_double(g.probability_sum(m_current_vert, m_visited));
+VertId Vechicle::choose_next(Graph &g, util::IRandomGenerator &rand, std::vector<bool>& feasible_verts) noexcept {
    VertId selected_vert = m_current_vert;
+      while(selected_vert == m_current_vert){
+         auto prob_target = rand.next_double(g.probability_sum(m_current_vert, m_visited));
+         g.for_each_feasible(m_current_vert, feasible_verts, [this, &prob_target, &feasible_verts, &selected_vert, prob_sum = 0.0](VertId    id, const Edge &edge) mutable {
+            auto visited_it = m_visited.find(id);
+            if (visited_it != m_visited.end()) {
+               return false;
+            }
 
-   g.for_each_feasible(m_current_vert, feasible_verts, [this, &feasible_verts, &prob_target, &selected_vert, prob_sum = 0.0](VertId id, const Edge &edge) mutable {
-   //   if (!feasible_verts[id]){
-   //      return false;
-   //   }
+            prob_sum += edge.prob();
+            if (prob_sum >= prob_target && id != m_current_vert) {
+               selected_vert = id;
+               return true;
+            }
 
-     auto visited_it = m_visited.find(id);
-     if (visited_it != m_visited.end()) {
-        return false;
-     }
-
-     prob_sum += edge.prob();
-     if (prob_sum >= prob_target && id != m_current_vert) {
-        selected_vert = id;
-        return true;
-     }
-
-     return false;
-   });
-
-   if (selected_vert == m_current_vert) {
-      return this->choose_next(g, rand, feasible_verts);
-   }
+            return false;
+         });
+      }
    return selected_vert;
 }
 

@@ -21,7 +21,7 @@ public:
   
   double traveled_distance(Graph &g) noexcept;
 
-  VertId choose_next(Graph &g, util::IRandomGenerator &rand, std::vector<bool> feasible_verts) noexcept;
+  VertId choose_next(Graph &g, util::IRandomGenerator &rand, std::vector<bool>& feasible_verts) noexcept;
   
   [[nodiscard]] constexpr VertId current_vert() const noexcept {
      return m_current_vert;

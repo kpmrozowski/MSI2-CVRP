@@ -26,6 +26,7 @@ struct Edge {
    Position pos;
 
    [[nodiscard]] constexpr double prob() const noexcept {
+      // return std::pow(pheromone, g_alpha + (iter)*(g_alpha_max - g_alpha)/(iter_max)) * std::pow(1.0 / distance, g_beta);
       return std::pow(pheromone, g_alpha) * std::pow(1.0 / distance, g_beta);
    }
 };
@@ -49,7 +50,7 @@ class Graph {
    void disconnect(VertId a, VertId b) noexcept;
    void print() const noexcept;
    void for_each_connected(VertId vert, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
-   void for_each_feasible(VertId vert, std::vector<bool> feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
+   void for_each_feasible(VertId vert, std::vector<bool>& feasible_verts, const std::function<bool(VertId, const Edge &)> &callback) const noexcept;
    void evaporate() noexcept;
    void set_pheromone(VertId a, VertId b, double value);
    void add_pheromone(VertId a, VertId b, double value);
