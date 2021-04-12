@@ -10,13 +10,16 @@ struct Range {
 };
 
 struct Variables {
-   double alpha, beta, evaporation_rate;
+   double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
 };
 
 struct Constraint {
-   Range alpha;
-   Range beta;
-   Range evaporation_rate;
+   Range alpha_initial;
+   Range beta_initial;
+   Range evaporation_rate_initial;
+   Range alpha_final;
+   Range beta_final;
+   Range evaporation_rate_final;
 };
 
 using ObjectiveFunction = std::function<double(const Variables &)>;

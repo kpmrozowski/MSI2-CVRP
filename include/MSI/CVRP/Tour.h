@@ -21,6 +21,7 @@ class Tour {
    std::vector<Vehicle> m_vehicles;
    std::vector<std::size_t> m_ant_completed;
    std::vector<bool> m_unvisited_verts;
+   std::size_t current_iter;
 
    Tour(Graph &graph,
         Params &params,

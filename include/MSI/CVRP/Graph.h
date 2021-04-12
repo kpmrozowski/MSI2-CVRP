@@ -26,7 +26,9 @@ struct Edge {
    double m_distance;
 
    [[nodiscard]] constexpr double prob(const Params &params) const noexcept {
-      return std::pow(m_pheromone, params.alpha) * std::pow(1.0 / m_distance, params.beta);
+      double alpha = params.alpha_final + (params.current_iteration - 0) * (params.alpha_final - params.alpha_initial)/(params.iterations - 0);
+      double beta = params.beta_initial + (params.current_iteration - 0) * (params.beta_final - params.beta_initial)/(params.iterations - 0);
+      return std::pow(m_pheromone, alpha) * std::pow(1.0 / m_distance, beta);
    }
 };
 
@@ -51,7 +53,7 @@ class Graph {
    void print() const noexcept;
    void for_each_connected(VertexId vert, const std::function<bool(VertexId, const Edge &)> &callback) const noexcept;
    void for_each_feasible(VertexId vertex, const std::vector<bool> &feasible_vertices, const std::function<bool(VertexId, const Edge &)> &callback) const noexcept;
-   void evaporate() noexcept;
+   void evaporate(std::size_t current_iter) noexcept;
    void set_pheromone(VertexId a, VertexId b, double value);
    void add_pheromone(VertexId a, VertexId b, double value);
    [[nodiscard]] double probability_sum(VertexId id, std::set<VertexId> &except) const;

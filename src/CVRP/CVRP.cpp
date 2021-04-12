@@ -43,6 +43,7 @@ double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
    srand(time(0));
    Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
+      tour.current_iter = i;
       tour.run();
    }
    return tour.min_distance();
