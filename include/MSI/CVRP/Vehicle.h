@@ -22,6 +22,7 @@ class Vehicle {
 
    [[nodiscard]] double traveled_distance(Graph &g) const noexcept;
    [[nodiscard]] VertexId choose_next(Graph &g, util::IRandomGenerator &rand, const std::vector<bool> &feasible_vertices) noexcept;
+   [[nodiscard]] std::vector<VertexId> route() const noexcept;
    void reset() noexcept;
 
    [[nodiscard]] constexpr VertexId current_vert() const noexcept {

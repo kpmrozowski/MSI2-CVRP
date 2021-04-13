@@ -40,14 +40,36 @@ void CVRP::start_cvrp() noexcept {
    opengl.draw(graphElements);
 }
 
+static std::pair<double, double> regression(std::vector<double> &values) {
+   auto x_mean = (values.size()-1.0) / 2.0;
+   auto y_mean = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+
+   auto denom = 0.0;
+   for (std::size_t i = 0; i < values.size(); ++i) {
+      denom += std::pow(static_cast<double>(i) - x_mean, 2.0);
+   }
+
+   auto beta = std::accumulate(values.begin(), values.end(), 0.0, [x_mean, y_mean, x = 0.0](double acc, double y) mutable {
+      return acc + ((x++) - x_mean) * (y - y_mean);
+   }) / denom;
+   return std::make_pair(y_mean - beta * x_mean, beta);
+}
+
 double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
    srand(time(0));
+
+   std::vector<double> distances(params.iterations-5);
    Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
       tour.current_iter = i;
       tour.run();
+      if (i >= 5) {
+         distances[i-5] = tour.shortest_distance().first;
+      }
    }
-   return tour.min_distance();
+
+   auto reg = regression(distances);
+   return reg.first + (params.iterations - 5.0) * reg.second;
 }
 
 Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {
