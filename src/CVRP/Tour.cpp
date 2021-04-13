@@ -75,7 +75,7 @@ void Tour::run() noexcept {
    }
 
    run_elite();
-   fmt::print("{:0.0f}\n", dist.first);
+   fmt::print("{:0.0f} ", dist.first);
 }
 
 void Tour::run_elite() noexcept {
