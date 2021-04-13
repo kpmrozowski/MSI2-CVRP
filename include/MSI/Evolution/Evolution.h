@@ -1,6 +1,7 @@
 #ifndef CVRP_EVOLUTION_H
 #define CVRP_EVOLUTION_H
 #include "../Util/IRandomGenerator.h"
+#include <MSI/CVRP/Tour.h>
 #include <functional>
 #include <numeric>
 #include <unordered_map>
@@ -27,7 +28,7 @@ struct Constraint {
 
 using ObjectiveFunction = std::function<double(const Variables &)>;
 
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction&objective_function, Constraint constraint);
+std::pair<double, Variables> FindOptimal(const int g_population_size, const int g_generations_count, const double g_mutation_chance, const double g_cross_chance, const double g_mutation_rate, const double g_optimal_fitness, util::IRandomGenerator &rand, const ObjectiveFunction&objective_function, Constraint constraint);
 
 }// namespace msi::evolution
 

@@ -18,7 +18,15 @@ TEST(Evolution, Simple) {
            {0.3, 2.0},
    };
 
-   auto result = msi::evolution::FindOptimal(r, objective_function, constraint);
+   constexpr auto g_population_size = 24;
+   constexpr auto g_generations_count = 10;
+   constexpr auto g_mutation_chance = 0.8;
+   constexpr auto g_cross_chance = 0.8;
+   constexpr auto g_mutation_rate = 0.1;// max change: 10%
+   constexpr auto g_optimal_fitness = 521.;
+
+   auto result = msi::evolution::FindOptimal(g_population_size, g_generations_count, g_mutation_chance, g_cross_chance, g_mutation_rate, g_optimal_fitness, r, objective_function, constraint);
+
    ASSERT_LE(result.second.alpha_initial, 0.2);
    ASSERT_LE(result.second.beta_initial, 0.3);
    ASSERT_GE(result.second.evaporation_rate_initial, 1.9);

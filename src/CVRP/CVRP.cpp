@@ -25,11 +25,15 @@ void CVRP::start_cvrp() noexcept {
       for (std::size_t j = i + 1; j < rows; j++)
          graph.connect(i, j, Edge(1.0, Position(En51k5_VERT_COORD[1][i], En51k5_VERT_COORD[2][i], En51k5_VERT_COORD[1][j], En51k5_VERT_COORD[2][j])));
 
-   srand(111);
-   Tour tour(graph, p, r);//, 100, 50, 0);
+   std::vector<double> distances(p.iterations);
+   Tour tour(graph, p, r);
    for (std::size_t iter_n = 0; iter_n < p.iterations; ++iter_n) {
+      tour.current_iter = iter_n;
       tour.run();
+      distances[iter_n] = tour.shortest_distance().first;
    }
+   auto it_min_dist = min(distances.begin(), distances.end());
+   fmt::print("\nShortest_distance = {}", *it_min_dist);
 
    // graph.print();
 
@@ -55,16 +59,17 @@ static std::pair<double, double> regression(std::vector<double> &values) {
    return std::make_pair(y_mean - beta * x_mean, beta);
 }
 
-double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
-   srand(time(0));
+double train(std::vector<msi::cvrp::Tour> &tours, util::IRandomGenerator &rand, Params &params, Graph &graph) {
 
    std::vector<double> distances(params.iterations);
-   Tour tour(graph, params, rand);
+   msi::cvrp::Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
       tour.current_iter = i;
       tour.run();
       distances[i] = tour.shortest_distance().first;
    }
+   tours.push_back(tour);
+   
 
    auto reg = regression(distances);
    return tour.min_distance() + params.iterations * reg.second;

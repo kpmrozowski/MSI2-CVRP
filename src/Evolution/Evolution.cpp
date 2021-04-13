@@ -3,14 +3,7 @@
 
 namespace msi::evolution {
 
-constexpr auto g_population_size = 24;
-constexpr auto g_generations_count = 10;
-constexpr auto g_mutation_chance = 0.8;
-constexpr auto g_cross_chance = 0.8;
-constexpr auto g_mutation_rate = 0.1;// max change: 10%
-constexpr auto g_optimal_fitness = 521.;
-
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
+std::pair<double, Variables> FindOptimal(const int g_population_size, const int g_generations_count, const double g_mutation_chance, const double g_cross_chance, const double g_mutation_rate, const double g_optimal_fitness, util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
    std::vector<Variables> population(g_population_size);
 
    std::generate(population.begin(), population.end(), [&rand, &constraint]() {
@@ -61,7 +54,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       std::vector<Variables> mutants(g_population_size);
       // double accumulated_fit{0};
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
-         return 1. / (fit - g_optimal_fitness) * (fit - g_optimal_fitness);
+         return 1. / (fit - g_optimal_fitness+1.1) * (fit - g_optimal_fitness+1.1);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
       std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), normalised_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
@@ -172,7 +165,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       }
 
       // mutation
-      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint](Variables &crossover) {
+      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint, &g_mutation_chance, &g_mutation_rate](Variables &crossover) {
          double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
          if (rand.next_double(1.0) < g_mutation_chance) {
 
