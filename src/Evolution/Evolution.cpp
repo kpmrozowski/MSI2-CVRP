@@ -3,7 +3,7 @@
 namespace msi::evolution {
 
 constexpr auto g_population_size = 12;
-constexpr auto g_generations_count = 12;
+constexpr auto g_generations_count = 120;
 constexpr auto g_mutation_chance = 0.8;
 constexpr auto g_mutation_rate = 0.95;
 constexpr auto g_cross = 0.8;
@@ -28,13 +28,17 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
    });
 
    std::vector<double> fitness(g_population_size);
-   auto it_optimum = std::min(fitness.begin(), fitness.end());
+   // std::future<double> fitness_threads =
+   //         std::async(objective_function, &population[0]);
+   for (std::size_t thread_nr = 0; thread_nr < g_population_size; thread_nr++)
+      ;
    std::vector<double> fitness_to_normalise(g_population_size);
    double fitness_to_normalise_sum{};
    std::vector<std::pair<double, Variables>> accumulated_fits(g_population_size);
    // std::set<double> selected_fits;
    // std::vector<Variables> selected_vars;
    std::transform(population.begin(), population.end(), fitness.begin(), objective_function);
+   auto it_optimum = std::min(fitness.begin(), fitness.end());
 
 
    for (std::size_t i = 0; i < g_generations_count; ++i) {
@@ -76,11 +80,10 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       while (crossovers.size() < crossovers_count) {
          std::size_t fatherId{rand.next_int(g_population_size)};
          std::size_t motherId{rand.next_int(g_population_size)};
-         if (parents.find(fatherId) == parents.end() && parents.find(motherId) == parents.end()){
+         if (parents.find(fatherId) == parents.end() && parents.find(motherId) == parents.end()) {
             parents.insert(fatherId);
             parents.insert(motherId);
-         }
-         else
+         } else
             continue;
          double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
          if (rand.next_double(1.0) < g_cross) {
@@ -103,38 +106,39 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
          }
          crossovers.emplace_back(Variables{alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final});
       }
-      for (std::size_t p = crossovers.size(); p < g_population_size; p++) {
+      while (crossovers.size() < g_population_size) {
          std::size_t singleId{rand.next_int(g_population_size)};
-         while (parents.find(singleId) != parents.end())
-            parents.insert(singleId);
+         if (parents.find(singleId) != parents.end())
+            continue;
+         parents.insert(singleId);
          crossovers.emplace_back(Variables{
                  selected[singleId].alpha_initial,
                  selected[singleId].beta_initial,
                  selected[singleId].evaporation_rate_initial,
                  selected[singleId].alpha_final,
                  selected[singleId].beta_final,
-                 selected[singleId].evaporation_rate_final});
+                 selected[singleId].evaporation_rate_final,});
       }
       // mutation
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand](Variables &crossover) {
          double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
          if (rand.next_double(1.0) < g_mutation_chance) {
-            alpha_initial = crossover.alpha_initial*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            alpha_initial = crossover.alpha_initial * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
          if (rand.next_double(1.0) < g_mutation_chance) {
-            beta_initial = crossover.beta_initial*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            beta_initial = crossover.beta_initial * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
          if (rand.next_double(1.0) < g_mutation_chance) {
-            evaporation_rate_initial = crossover.evaporation_rate_initial*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            evaporation_rate_initial = crossover.evaporation_rate_initial * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
          if (rand.next_double(1.0) < g_mutation_chance) {
-            alpha_final = crossover.alpha_final*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            alpha_final = crossover.alpha_final * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
          if (rand.next_double(1.0) < g_mutation_chance) {
-            beta_final = crossover.beta_final*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            beta_final = crossover.beta_final * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
          if (rand.next_double(1.0) < g_mutation_chance) {
-            evaporation_rate_final = crossover.evaporation_rate_final*rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
+            evaporation_rate_final = crossover.evaporation_rate_final * rand.next_double(g_mutation_rate, 1 - g_mutation_rate);
          }
 
          return Variables{alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final};

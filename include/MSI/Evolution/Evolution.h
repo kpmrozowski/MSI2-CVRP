@@ -4,6 +4,8 @@
 #include <functional>
 #include <numeric>
 #include <unordered_map>
+#include <future>
+#include <fmt/core.h>
 
 namespace msi::evolution {
 
