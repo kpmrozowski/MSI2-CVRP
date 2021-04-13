@@ -48,4 +48,17 @@ void Vehicle::reset() noexcept {
    m_capacity_left =  m_params.initial_capacity;
 }
 
+std::vector<VertexId> Vehicle::route() const noexcept {
+   std::vector<VertexId> result(m_visited_edges.size()+1);
+   if (m_visited_edges.empty())
+      return result;
+
+   std::transform(m_visited_edges.begin(), m_visited_edges.end(), result.begin(), [](const std::pair<VertexId, VertexId> &edge) {
+      return edge.first;
+   });
+   result[m_visited_edges.size()] = m_visited_edges[m_visited_edges.size()-1].second;
+
+   return result;
+}
+
 }// namespace msi::cvrp

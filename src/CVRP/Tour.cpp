@@ -69,18 +69,35 @@ void Tour::run() noexcept {
    }
 
    auto dist = shortest_distance();
-   if (dist < m_min_distance) {
-      m_min_distance = dist;
+   if (dist.first < m_min_distance) {
+      m_min_distance = dist.first;
+      m_min_route = m_vehicles[dist.second].route();
    }
-   fmt::print("{:0.0f} ", dist);
+
+   run_elite();
+   fmt::print("{:0.0f} ", dist.first);
 }
 
-double Tour::shortest_distance() noexcept {
-   double sd = 10e9;
-   for (std::size_t antId = 0; antId < m_params.vehicle_count; antId++)
-      if (sd > m_vehicles[antId].traveled_distance(m_graph))
-         sd = m_vehicles[antId].traveled_distance(m_graph);
-   return sd;
+void Tour::run_elite() noexcept {
+   if(m_min_route.empty())
+      return;
+
+   std::for_each(m_min_route.begin()+1, m_min_route.end(), [this, prev = *m_min_route.begin()](VertexId vertex) mutable {
+      this->m_graph.add_pheromone(prev, vertex, 0.2);
+      prev = vertex;
+   });
+}
+
+std::pair<double, std::size_t> Tour::shortest_distance() noexcept {
+   double shortest = 10e9;
+   std::size_t top_vehicle = 0;
+   for (std::size_t vehicle_id = 0; vehicle_id < m_params.vehicle_count; vehicle_id++) {
+      if (shortest > m_vehicles[vehicle_id].traveled_distance(m_graph)) {
+         shortest = m_vehicles[vehicle_id].traveled_distance(m_graph);
+         top_vehicle = vehicle_id;
+      }
+   }
+   return std::make_pair(shortest, top_vehicle);
 }
 
 const Vehicle &Tour::best_vehicle() const noexcept {

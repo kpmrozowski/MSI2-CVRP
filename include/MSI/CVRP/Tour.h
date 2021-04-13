@@ -15,6 +15,7 @@ class Tour {
    std::size_t m_passes;
    VertexId m_target;
    double m_min_distance = std::numeric_limits<double>::infinity();
+   std::vector<VertexId> m_min_route;
 
  public:
    Graph &m_graph;
@@ -30,7 +31,8 @@ class Tour {
    void reset_vehicles() noexcept;
    void run() noexcept;
    void update_pheromone() noexcept;
-   [[nodiscard]] double shortest_distance() noexcept;
+   void run_elite() noexcept;
+   [[nodiscard]] std::pair<double, std::size_t> shortest_distance() noexcept;
    [[nodiscard]] const Vehicle &best_vehicle() const noexcept;
 
    [[nodiscard]] constexpr double min_distance() const noexcept {
