@@ -30,12 +30,14 @@ struct Params {
 //  evaporation_final: 0.9811404145
 
 // final result:
-//   alpha_initial: 1.4586584860010896
-//   beta_initial: 3.291163231649531
-//   evaporation_initial: 0.99
-//   alpha_final: 2
-//   beta_final: 0.1
-//   evaporation_final: 0.8217234398824839
+//   alpha_initial: 1.7406444073304124
+//   beta_initial: 9
+//   evaporation_initial: 0.85
+//   alpha_final: 1.2136495740909226
+//   beta_final: 0.01
+//   evaporation_final: 0.5079737299999999
+//   Fitness: 573.6677372822943
+// blind luck
 }
 
 #endif//CVRP_PARAMS_H

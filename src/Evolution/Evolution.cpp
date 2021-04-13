@@ -10,7 +10,7 @@ constexpr auto g_cross_chance = 0.8;
 constexpr auto g_mutation_rate = 0.1;// max change: 10%
 constexpr auto g_optimal_fitness = 521.;
 
-Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
+std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
    std::vector<Variables> population(g_population_size);
 
    std::generate(population.begin(), population.end(), [&rand, &constraint]() {
@@ -25,10 +25,12 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       };
    });
 
+   std::vector<std::pair<double, Variables>> fits_vars(g_population_size);
+   std::vector<std::vector<std::pair<double, Variables>>> generations(g_generations_count);
    std::vector<double> fitness(g_population_size);
    std::vector<double> fitness_to_normalise(g_population_size);
    double fitness_to_normalise_sum{};
-   std::vector<std::pair<double, Variables>> accumulated_fits(g_population_size);
+   std::vector<std::pair<double, Variables>> normalised_fits(g_population_size);
    fmt::print("\nEWALUATING {} ANTS\n", g_population_size);
 
 
@@ -46,10 +48,14 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
    });
 
    auto it_optimum = std::min(fitness.begin(), fitness.end());
-   fmt::print("EWALUATION FINISHED\n\n");
+   auto it_optimum_population = generations.begin();
+   std::transform(fitness.begin(), fitness.end(), population.begin(), fits_vars.begin(), [](double fit, Variables vars) {
+      return std::make_pair(fit, vars);
+   });
 
 
    for (std::size_t i = 0; i < g_generations_count; ++i) {
+      generations[i] = fits_vars;
       std::vector<Variables> selected;
       std::vector<Variables> crossovers;
       std::vector<Variables> mutants(g_population_size);
@@ -58,19 +64,19 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
          return 1. / (fit - g_optimal_fitness) * (fit - g_optimal_fitness);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
-      std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), accumulated_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
+      std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), normalised_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
          fit /= fitness_to_normalise_sum;
          return std::make_pair(fit, vars);
       });
       // Uncomment to arrenge roulette from lowest to highest fitnesses:
-      // std::sort(accumulated_fits.begin(), accumulated_fits.end(), [](auto &left, auto &right) {
+      // std::sort(normalised_fits.begin(), normalised_fits.end(), [](auto &left, auto &right) {
       //    return left.first < right.first;
       // });
 
       // selection
       while (selected.size() < g_population_size * 2) {
          double value = rand.next_double(1.0);
-         for (auto fnv : accumulated_fits) {
+         for (auto fnv : normalised_fits) {
             value -= fnv.first;
             if (value <= 0) {
                // Draw without return
@@ -228,11 +234,13 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       fmt::print("EWALUATION FINISHED\n\n");
 
       for (std::size_t p = 0; p < g_population_size; ++p)
-         if (fitness[p] < *it_optimum)
+         if (fitness[p] < *it_optimum) {
+            it_optimum_population = generations.begin() + i;
             it_optimum = fitness.begin() + p;
+         }
    }
 
-   return population[it_optimum - fitness.begin()];
+   return generations[it_optimum_population - generations.begin()][it_optimum - fitness.begin()];
 }
 
 }// namespace msi::evolution

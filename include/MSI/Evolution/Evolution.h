@@ -5,7 +5,6 @@
 #include <numeric>
 #include <unordered_map>
 #include <future>
-#include <fmt/core.h>
 
 namespace msi::evolution {
 
@@ -28,7 +27,7 @@ struct Constraint {
 
 using ObjectiveFunction = std::function<double(const Variables &)>;
 
-Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction&objective_function, Constraint constraint);
+std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction&objective_function, Constraint constraint);
 
 }// namespace msi::evolution
 

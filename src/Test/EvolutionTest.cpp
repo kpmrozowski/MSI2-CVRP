@@ -19,10 +19,10 @@ TEST(Evolution, Simple) {
    };
 
    auto result = msi::evolution::FindOptimal(r, objective_function, constraint);
-   ASSERT_LE(result.alpha_initial, 0.2);
-   ASSERT_LE(result.beta_initial, 0.3);
-   ASSERT_GE(result.evaporation_rate_initial, 1.9);
-   ASSERT_LE(result.alpha_final, 0.2);
-   ASSERT_LE(result.beta_final, 0.3);
-   ASSERT_GE(result.evaporation_rate_final, 1.9);
+   ASSERT_LE(result.second.alpha_initial, 0.2);
+   ASSERT_LE(result.second.beta_initial, 0.3);
+   ASSERT_GE(result.second.evaporation_rate_initial, 1.9);
+   ASSERT_LE(result.second.alpha_final, 0.2);
+   ASSERT_LE(result.second.beta_final, 0.3);
+   ASSERT_GE(result.second.evaporation_rate_final, 1.9);
 }
