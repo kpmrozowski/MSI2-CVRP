@@ -17,7 +17,7 @@ msi::evolution::ObjectiveFunction make_objective_function(msi::util::IRandomGene
       params.beta_final = vars.beta_final;
       params.evaporation_rate_final = vars.evaporation_rate_final;
       auto graph_copy = msi::cvrp::Graph(graph);
-      auto result =  msi::cvrp::train(rand, params, graph_copy);
+      auto result = msi::cvrp::train(rand, params, graph_copy);
       fmt::print("\nfinal result:\n");
       fmt::print("  alpha_initial: {}\n", params.alpha_initial);
       fmt::print("  beta_initial: {}\n", params.beta_initial);
@@ -56,12 +56,18 @@ int main(int argc, char **argv) {
    msi::util::Random rand;
    msi::cvrp::Params params;
    msi::evolution::Constraint constraint{
-           {0.8, 2.0},
-           {1.6, 5.0},
-           {0.85, 0.99},
-           {0.8, 2.0},
-           {1.6, 5.0},
-           {0.85, 0.99},
+           //   {0.8, 2.0},
+           //   {1.6, 5.0},
+           //   {0.85, 0.99},
+           //   {0.8, 2.0},
+           //   {1.6, 5.0},
+           //   {0.85, 0.99},
+           {0.1, 2.0},
+           {3.0, 9.0},
+           {0.85, 0.999},
+           {1.0, 8.0},
+           {0.01, 5.0},
+           {0.5, 0.9},
    };
 
    auto result = msi::evolution::FindOptimal(rand, make_objective_function(rand, params, input_files[0], input_files[1]), constraint);

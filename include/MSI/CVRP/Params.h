@@ -5,9 +5,9 @@
 namespace msi::cvrp {
 
 struct Params {
-   std::size_t iterations = 12;
+   std::size_t iterations = 30;
    std::size_t depot_id = 0;
-   std::size_t vehicle_count = 50;
+   std::size_t vehicle_count = 10;
    std::size_t tour_count = 5;
    std::size_t pass_count = 50;
    std::size_t initial_capacity = 160;
@@ -29,6 +29,13 @@ struct Params {
 //  beta_final: 3.3867969
 //  evaporation_final: 0.9811404145
 
+// final result:
+//   alpha_initial: 1.4586584860010896
+//   beta_initial: 3.291163231649531
+//   evaporation_initial: 0.99
+//   alpha_final: 2
+//   beta_final: 0.1
+//   evaporation_final: 0.8217234398824839
 }
 
 #endif//CVRP_PARAMS_H

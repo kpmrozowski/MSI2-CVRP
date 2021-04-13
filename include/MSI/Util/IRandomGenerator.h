@@ -12,6 +12,7 @@ class IRandomGenerator {
    [[nodiscard]] virtual double next_double(double max) noexcept = 0;
    [[nodiscard]] virtual double next_double(double min, double max) noexcept = 0;
    [[nodiscard]] virtual int next_int(int max) noexcept = 0;
+   [[nodiscard]] virtual int next_int(int min, int max) noexcept = 0;
 };
 
 class Random : public IRandomGenerator {
@@ -26,6 +27,10 @@ class Random : public IRandomGenerator {
 
    int next_int(int max) noexcept override {
       return std::rand() % max;
+   }
+
+   int next_int(int min, int max) noexcept override {
+      return next_int(max - min) + min;
    }
 };
 
