@@ -58,18 +58,16 @@ static std::pair<double, double> regression(std::vector<double> &values) {
 double train(util::IRandomGenerator &rand, Params &params, Graph &graph) {
    srand(time(0));
 
-   std::vector<double> distances(params.iterations-5);
+   std::vector<double> distances(params.iterations);
    Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
       tour.current_iter = i;
       tour.run();
-      if (i >= 5) {
-         distances[i-5] = tour.shortest_distance().first;
-      }
+      distances[i] = tour.shortest_distance().first;
    }
 
    auto reg = regression(distances);
-   return reg.first + (params.iterations - 5.0) * reg.second;
+   return tour.min_distance() + params.iterations * reg.second;
 }
 
 Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {
