@@ -67,7 +67,12 @@ void Tour::run() noexcept {
 
       this->update_pheromone();
    }
-   fmt::print("{}\n", this->shortest_distance());
+
+   auto dist = shortest_distance();
+   if (dist < m_min_distance) {
+      m_min_distance = dist;
+   }
+   fmt::print("{:0.0f} ", dist);
 }
 
 double Tour::shortest_distance() noexcept {
@@ -80,7 +85,7 @@ double Tour::shortest_distance() noexcept {
 
 const Vehicle &Tour::best_vehicle() const noexcept {
    double smallest_distance = std::numeric_limits<double>::infinity();
-   std::size_t id = 10e3;
+   std::size_t id{};
    for (std::size_t vehicle_id = 0; vehicle_id < m_params.vehicle_count; vehicle_id++)
       if (smallest_distance > m_vehicles[vehicle_id].traveled_distance(m_graph))
          id = vehicle_id;
@@ -89,7 +94,7 @@ const Vehicle &Tour::best_vehicle() const noexcept {
 }
 
 void Tour::update_pheromone() noexcept {
-   m_graph.evaporate();
+   m_graph.evaporate(this->current_iter);
 
    for (const Vehicle &ant : m_vehicles) {
       if (ant.current_vert() != m_target) {

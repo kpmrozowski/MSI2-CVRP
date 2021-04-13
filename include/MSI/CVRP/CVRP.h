@@ -15,6 +15,9 @@ public:
   void start_cvrp() noexcept;
 };
 
+double train(util::IRandomGenerator &rand, Params &params, Graph &graph);
+Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands);
+
 }// namespace msi::cvrp
 
 #endif//CVRP_CVRP_H

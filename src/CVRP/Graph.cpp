@@ -96,10 +96,10 @@ void Graph::for_each_feasible(VertexId vertex, const std::vector<bool> &feasible
    }
 }
 
-void Graph::evaporate() noexcept {
+void Graph::evaporate(std::size_t current_iter) noexcept {
    for (std::optional<Edge> &edge : m_edges) {
       if (edge.has_value()) {
-         edge->m_pheromone *= m_params.evaporation_rate;
+         edge->m_pheromone *= m_params.evaporation_rate_initial + (current_iter - 0) * (m_params.evaporation_rate_final - m_params.evaporation_rate_initial)/(m_params.iterations - 0);
       }
    }
 }

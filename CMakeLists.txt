@@ -6,6 +6,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
 
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -74,4 +76,6 @@ include_directories(./include)
 
 add_subdirectory(src/AntSystem)
 add_subdirectory(src/CVRP)
+add_subdirectory(src/Evolution)
 add_subdirectory(src/Test)
+add_subdirectory(src/Tool/cvrp-evo)
