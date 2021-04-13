@@ -2,6 +2,8 @@
 #define CVRP_EVOLUTION_H
 #include "../Util/IRandomGenerator.h"
 #include <functional>
+#include <numeric>
+#include <unordered_map>
 
 namespace msi::evolution {
 

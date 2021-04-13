@@ -7,6 +7,7 @@
 namespace msi::cvrp {
 
 void CVRP::start_cvrp() noexcept {
+   srand(time(0));
    msi::util::Random r;
    msi::util::Reader re;
    // re.display_file();
