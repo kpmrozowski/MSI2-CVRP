@@ -7,7 +7,7 @@ constexpr auto g_population_size = 24;
 constexpr auto g_generations_count = 10;
 constexpr auto g_mutation_chance = 0.8;
 constexpr auto g_cross_chance = 0.8;
-constexpr auto g_mutation_rate = 0.1; // max change: 10%
+constexpr auto g_mutation_rate = 0.1;// max change: 10%
 constexpr auto g_optimal_fitness = 521.;
 
 Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
@@ -37,8 +37,13 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
    //         std::async(objective_function, &population[0]);
    // for (std::size_t thread_nr = 0; thread_nr < g_population_size % 12 + 1; thread_nr++)
    // ;
-   std::transform(population.begin(), population.end(), fitness.begin(), objective_function);
-
+   std::vector<std::future<double>> future_fitness(g_population_size);
+   std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
+      return std::async(std::launch::async, objective_function, vars);
+   });
+   std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
+      return f.get();
+   });
 
    auto it_optimum = std::min(fitness.begin(), fitness.end());
    fmt::print("EWALUATION FINISHED\n\n");
@@ -50,7 +55,7 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       std::vector<Variables> mutants(g_population_size);
       // double accumulated_fit{0};
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
-         return 1. /  (fit - g_optimal_fitness) * (fit - g_optimal_fitness);
+         return 1. / (fit - g_optimal_fitness) * (fit - g_optimal_fitness);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
       std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), accumulated_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
@@ -78,43 +83,44 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       }
 
       // crossover
-      std::size_t crossovers_count{rand.next_int(0, g_population_size)};
+      auto crossovers_count = static_cast<std::size_t>(rand.next_int(0, g_population_size));
       std::set<std::size_t> parents{};
       std::size_t omega{};// overrelaxation coefficient
       while (crossovers.size() < crossovers_count) {
-         std::size_t fatherId{rand.next_int(0, g_population_size * 2)};
-         std::size_t motherId{rand.next_int(0, g_population_size * 2)};
-         if (crossovers.size() != 0)
-            if (parents.find(fatherId) == parents.end() && parents.find(motherId) == parents.end()) {
-               parents.insert(fatherId);
-               parents.insert(motherId);
-            } else
+         auto fatherId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
+         auto motherId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
+         if (!crossovers.empty()) {
+            if (parents.find(fatherId) != parents.end() || parents.find(motherId) != parents.end()) {
                continue;
+            }
+            parents.insert(fatherId);
+            parents.insert(motherId);
+         }
          fmt::print("cross ");
          omega = rand.next_double(1.0);
          double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
          if (rand.next_double(1.0) < g_cross_chance) {
-            alpha_initial = (1 - omega) * selected[motherId].alpha_initial + omega * selected[fatherId].alpha_initial;
+            alpha_initial = (1.0 - omega) * selected[motherId].alpha_initial + omega * selected[fatherId].alpha_initial;
          } else
             alpha_initial = selected[motherId].alpha_initial;
          if (rand.next_double(1.0) < g_cross_chance) {
-            beta_initial = (1 - omega) * selected[motherId].beta_initial + omega * selected[fatherId].beta_initial;
+            beta_initial = (1.0 - omega) * selected[motherId].beta_initial + omega * selected[fatherId].beta_initial;
          } else
             beta_initial = selected[motherId].beta_initial;
          if (rand.next_double(1.0) < g_cross_chance) {
-            evaporation_rate_initial = (1 - omega) * selected[motherId].evaporation_rate_initial + omega * selected[fatherId].evaporation_rate_initial;
+            evaporation_rate_initial = (1.0 - omega) * selected[motherId].evaporation_rate_initial + omega * selected[fatherId].evaporation_rate_initial;
          } else
             evaporation_rate_initial = selected[motherId].evaporation_rate_initial;
          if (rand.next_double(1.0) < g_cross_chance) {
-            alpha_final = (1 - omega) * selected[motherId].alpha_final + omega * selected[fatherId].alpha_final;
+            alpha_final = (1.0 - omega) * selected[motherId].alpha_final + omega * selected[fatherId].alpha_final;
          } else
             alpha_final = selected[motherId].alpha_final;
          if (rand.next_double(1.0) < g_cross_chance) {
-            beta_final = (1 - omega) * selected[motherId].beta_final + omega * selected[fatherId].beta_final;
+            beta_final = (1.0 - omega) * selected[motherId].beta_final + omega * selected[fatherId].beta_final;
          } else
             beta_final = selected[motherId].beta_final;
          if (rand.next_double(1.0) < g_cross_chance) {
-            evaporation_rate_final = (1 - omega) * selected[motherId].evaporation_rate_final + omega * selected[fatherId].evaporation_rate_final;
+            evaporation_rate_final = (1.0 - omega) * selected[motherId].evaporation_rate_final + omega * selected[fatherId].evaporation_rate_final;
          } else
             evaporation_rate_final = selected[motherId].evaporation_rate_final;
 
@@ -135,7 +141,7 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       }
       // fill population with uncrossed parents
       while (crossovers.size() < g_population_size) {
-         std::size_t singleId{rand.next_int(0, g_population_size * 2)};
+         auto singleId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
          if (parents.find(singleId) == parents.end()) {
             parents.insert(singleId);
          } else
@@ -212,7 +218,12 @@ Variables FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &obj
       });
 
       fmt::print("\nEWALUATING {}/{} GENERATION\n", i, g_generations_count);
-      std::transform(population.begin(), population.end(), fitness.begin(), objective_function);
+      std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
+        return std::async(std::launch::async, objective_function, vars);
+      });
+      std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
+        return f.get();
+      });
       auto it_optimum = std::min(fitness.begin(), fitness.end());
       fmt::print("EWALUATION FINISHED\n\n");
 
