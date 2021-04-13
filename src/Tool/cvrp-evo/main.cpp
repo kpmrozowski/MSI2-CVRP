@@ -72,10 +72,11 @@ int main(int argc, char **argv) {
 
    auto result = msi::evolution::FindOptimal(rand, make_objective_function(rand, params, input_files[0], input_files[1]), constraint);
    fmt::print("final result:\n");
-   fmt::print("  alpha_initial: {}\n", result.alpha_initial);
-   fmt::print("  beta_initial: {}\n", result.beta_initial);
-   fmt::print("  evaporation_initial: {}\n", result.evaporation_rate_initial);
-   fmt::print("  alpha_final: {}\n", result.alpha_final);
-   fmt::print("  beta_final: {}\n", result.beta_final);
-   fmt::print("  evaporation_final: {}\n", result.evaporation_rate_final);
+   fmt::print("  alpha_initial: {}\n", result.second.alpha_initial);
+   fmt::print("  beta_initial: {}\n", result.second.beta_initial);
+   fmt::print("  evaporation_initial: {}\n", result.second.evaporation_rate_initial);
+   fmt::print("  alpha_final: {}\n", result.second.alpha_final);
+   fmt::print("  beta_final: {}\n", result.second.beta_final);
+   fmt::print("  evaporation_final: {}\n", result.second.evaporation_rate_final);
+   fmt::print("  Fitness: {}\n", result.first);
 }
