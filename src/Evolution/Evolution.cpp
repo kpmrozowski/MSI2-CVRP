@@ -1,10 +1,20 @@
 #include <MSI/Evolution/Evolution.h>
 #include <fmt/core.h>
+#include <fmt/os.h>
 
 namespace msi::evolution {
 
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint) {
-   std::vector<Variables> population(params.population_size);
+constexpr auto g_population_size = 24;
+constexpr auto g_generations_count = 20;
+constexpr auto g_mutation_chance = 0.8;
+constexpr auto g_cross_chance = 0.8;
+constexpr auto g_mutation_rate = 0.1;// max change: 10%
+constexpr auto g_optimal_fitness = 521.;
+
+std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
+   std::vector<Variables> population(g_population_size);
+   std::vector<Variables> optimal_over_generations(g_generations_count);
+   std::vector<double> optimal_fitness(g_generations_count);
 
    std::generate(population.begin(), population.end(), [&rand, &constraint]() {
       return Variables{
@@ -23,16 +33,11 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    std::vector<double> fitness(params.population_size);
    std::vector<double> fitness_to_normalise(params.population_size);
    double fitness_to_normalise_sum{};
-   std::vector<std::pair<double, Variables>> normalised_fits(params.population_size);
-   fmt::print("\nEWALUATING {} ANTS\n", params.population_size);
+   std::vector<std::pair<double, Variables>> normalised_fits(g_population_size);
+   fmt::print("\nEVALUATING {} ANTS\n", g_population_size);
 
 
-   // MULTITHREADING
-   // std::future<double> fitness_threads =
-   //         std::async(objective_function, &population[0]);
-   // for (std::size_t thread_nr = 0; thread_nr < params.population_size % 12 + 1; thread_nr++)
-   // ;
-   std::vector<std::future<double>> future_fitness(params.population_size);
+   std::vector<std::future<double>> future_fitness(g_population_size);
    std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
       return std::async(std::launch::async, objective_function, vars);
    });
@@ -72,9 +77,6 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          for (auto fnv : normalised_fits) {
             value -= fnv.first;
             if (value <= 0) {
-               // Draw without return
-               // if(selected_map.find(fnv.first) == selected_map.end())
-               //    continue;
                selected.push_back(fnv.second);
                break;
             }
@@ -123,20 +125,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          } else
             evaporation_rate_final = selected[motherId].evaporation_rate_final;
 
-         // fmt::print("\ncrossover result:\n");
-         // fmt::print("  alpha_initial: {}\n", alpha_initial);
-         // fmt::print("  beta_initial: {}\n", beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", alpha_final);
-         // fmt::print("  beta_final: {}\n", beta_final);
-         // fmt::print("  evaporation_final: {}\n", evaporation_rate_final);
          crossovers.emplace_back(Variables{
                  std::clamp(alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
                  std::clamp(beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
                  std::clamp(evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
                  std::clamp(alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
                  std::clamp(beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)});
+                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max),
+         });
       }
       // fill population with uncrossed parents
       while (crossovers.size() < params.population_size) {
@@ -148,25 +144,21 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          fmt::print("single ");
          parents.insert(singleId);
 
-         // fmt::print("\nsingle parent result:\n");
-         // fmt::print("  alpha_initial: {}\n", selected[singleId].alpha_initial);
-         // fmt::print("  beta_initial: {}\n", selected[singleId].beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", selected[singleId].evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", selected[singleId].alpha_final);
-         // fmt::print("  beta_final: {}\n", selected[singleId].beta_final);
-         // fmt::print("  evaporation_final: {}\n", selected[singleId].evaporation_rate_final);
          crossovers.emplace_back(Variables{
                  std::clamp(selected[singleId].alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
                  std::clamp(selected[singleId].beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
                  std::clamp(selected[singleId].evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
                  std::clamp(selected[singleId].alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
                  std::clamp(selected[singleId].beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(selected[singleId].evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)});
+                 std::clamp(selected[singleId].evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max),
+         });
       }
 
       // mutation
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint, &params](Variables &crossover) {
          double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
+ha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+=======
          if (rand.next_double(1.0) < params.mutation_chance) {
 
             // fmt::print("\nbefore mutation result:\n");
@@ -200,20 +192,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          } else
             beta_initial = crossover.beta_initial;
 
-         // fmt::print("\nmutation result:\n");
-         // fmt::print("  alpha_initial: {}\n", alpha_initial);
-         // fmt::print("  beta_initial: {}\n", beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", alpha_final);
-         // fmt::print("  beta_final: {}\n", beta_final);
-         // fmt::print("  evaporation_final: {}\n", evaporation_rate_final);
          return Variables{
                  std::clamp(alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
                  std::clamp(beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
                  std::clamp(evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
                  std::clamp(alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
                  std::clamp(beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)};
+                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max),
+         };
       });
 
       fmt::print("\nEWALUATING {}/{} GENERATION\n", i, params.generations_count);
@@ -223,14 +209,39 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
         return f.get();
       });
+      std::transform(fitness.begin(), fitness.end(), population.begin(), fits_vars.begin(), [](double fit, Variables vars) {
+        return std::make_pair(fit, vars);
+      });
       auto it_optimum = std::min(fitness.begin(), fitness.end());
-      fmt::print("EWALUATION FINISHED\n\n");
+      optimal_over_generations[i] = population[it_optimum - fitness.begin()];
+      optimal_fitness[i] = *it_optimum;
+      fmt::print("EVALUATION FINISHED\n\n");
 
       for (std::size_t p = 0; p < params.population_size; ++p)
          if (fitness[p] < *it_optimum) {
             it_optimum_population = generations.begin() + i;
             it_optimum = fitness.begin() + p;
          }
+   }
+
+
+   auto log = fmt::output_file("params.csv");
+   log.print("iteration,fitness,ialpha,ibeta,ievapor,falpha,fbeta,fevapor\n");
+   auto iter = 0;
+   for (const auto &opt : optimal_over_generations) {
+      log.print("{},{},{},{},{},{},{},{}\n", iter+1, optimal_fitness[iter], opt.alpha_initial, opt.beta_initial, opt.evaporation_rate_initial, opt.alpha_final, opt.beta_final, opt.evaporation_rate_final);
+      ++iter;
+   }
+   log.close();
+
+   auto log_fit = fmt::output_file("fitness.csv");
+   log_fit.print("n,generation,specimen,fitness\n");
+   iter = 0;
+   for (std::size_t gen = 0; gen < g_generations_count; ++gen) {
+      for (std::size_t pop = 0; pop < g_population_size; ++pop) {
+         log_fit.print("{},{},{},{}\n", iter+1, gen, pop, generations[gen][pop].first);
+         ++iter;
+      }
    }
 
    return generations[it_optimum_population - generations.begin()][it_optimum - fitness.begin()];

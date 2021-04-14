@@ -28,7 +28,7 @@ void Tour::reset_vehicles() noexcept {
    std::fill(m_ant_completed.begin(), m_ant_completed.end(), 0);
 }
 
-void Tour::run() noexcept {
+void Tour::run(std::size_t iter) noexcept {
    this->reset_vehicles();
    VertexId vert_id;
 
@@ -48,7 +48,7 @@ void Tour::run() noexcept {
          auto feasible_vertex_count = std::count(feasible_vertices.begin(), feasible_vertices.end(), true);
          m_unvisited_verts[0] = true;
 
-         if (feasible_vertex_count > 1) {
+         if (feasible_vertex_count > 0) {
             selected_vert = m_vehicles[vehicle_id].choose_next(m_graph, m_rand, feasible_vertices);
             if (selected_vert != m_vehicles[vehicle_id].m_current_vert) {
                m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
@@ -87,16 +87,16 @@ void Tour::run() noexcept {
       m_min_route = m_vehicles[dist.second].route();
    }
 
-   run_elite();
+   run_elite(iter);
    fmt::print("{:0.0f} ", dist.first);
 }
 
-void Tour::run_elite() noexcept {
+void Tour::run_elite(std::size_t iter) noexcept {
    if(m_min_route.empty())
       return;
 
    std::for_each(m_min_route.begin()+1, m_min_route.end(), [this, prev = *m_min_route.begin()](VertexId vertex) mutable {
-      this->m_graph.add_pheromone(prev, vertex, 0.2);
+      this->m_graph.add_pheromone(prev, vertex, 1.2);
       prev = vertex;
    });
 }

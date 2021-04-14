@@ -29,9 +29,9 @@ class Tour {
         util::IRandomGenerator &rand);
 
    void reset_vehicles() noexcept;
-   void run() noexcept;
+   void run(std::size_t iter) noexcept;
    void update_pheromone() noexcept;
-   void run_elite() noexcept;
+   void run_elite(std::size_t iter) noexcept;
    [[nodiscard]] std::pair<double, std::size_t> shortest_distance() noexcept;
    [[nodiscard]] const Vehicle &best_vehicle() const noexcept;
 

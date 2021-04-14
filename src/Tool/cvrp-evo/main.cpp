@@ -36,13 +36,6 @@ msi::evolution::ObjectiveFunction make_objective_function(std::vector<msi::cvrp:
       fmt::print("  beta_final: {}\n", params.beta_final);
       fmt::print("  evaporation_final: {}\n", params.evaporation_rate_final);
       fmt::print("  Fitness: {}\n", result);
-      //   final result:
-      //   alpha_initial: 1.3928528832710014
-      //   beta_initial: 4.944063091326039
-      //   evaporation_initial: 0.9310447281317501
-      //   alpha_final: 0
-      //   beta_final: 0
-      //   evaporation_final: 0
       return result;
    };
 }
