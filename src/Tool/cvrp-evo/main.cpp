@@ -18,7 +18,7 @@ msi::evolution::ObjectiveFunction make_objective_function(msi::util::IRandomGene
       params.evaporation_rate_final = vars.evaporation_rate_final;
       auto graph_copy = msi::cvrp::Graph(graph);
       auto result = msi::cvrp::train(rand, params, graph_copy);
-      fmt::print("\nfinal result:\n");
+      fmt::print("\nresult:\n");
       fmt::print("  alpha_initial: {}\n", params.alpha_initial);
       fmt::print("  beta_initial: {}\n", params.beta_initial);
       fmt::print("  evaporation_initial: {}\n", params.evaporation_rate_initial);
@@ -26,13 +26,6 @@ msi::evolution::ObjectiveFunction make_objective_function(msi::util::IRandomGene
       fmt::print("  beta_final: {}\n", params.beta_final);
       fmt::print("  evaporation_final: {}\n", params.evaporation_rate_final);
       fmt::print("  Fitness: {}\n", result);
-      //   final result:
-      //   alpha_initial: 1.3928528832710014
-      //   beta_initial: 4.944063091326039
-      //   evaporation_initial: 0.9310447281317501
-      //   alpha_final: 0
-      //   beta_final: 0
-      //   evaporation_final: 0
       return result;
    };
 }
