@@ -28,7 +28,7 @@ void CVRP::start_cvrp() noexcept {
    std::vector<double> distances(p.iterations);
    Tour tour(graph, p, r);
    for (std::size_t iter_n = 0; iter_n < p.iterations; ++iter_n) {
-      tour.current_iter = iter_n;
+      tour.m_current_iter = iter_n;
       tour.run();
       distances[iter_n] = tour.shortest_distance().first;
    }
@@ -64,7 +64,7 @@ double train(std::vector<msi::cvrp::Tour> &tours, util::IRandomGenerator &rand, 
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
-      tour.current_iter = i;
+      tour.m_current_iter = i;
       tour.run();
       distances[i] = tour.shortest_distance().first;
    }

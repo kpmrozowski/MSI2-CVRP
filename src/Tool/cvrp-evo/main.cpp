@@ -82,7 +82,18 @@ int main(int argc, char **argv) {
    };
    std::vector<msi::cvrp::Tour> tours;
 
-   auto result = msi::evolution::FindOptimal(g_population_size, g_generations_count, g_mutation_chance, g_cross_chance, g_mutation_rate, g_optimal_fitness, rand, make_objective_function(tours, rand, params, input_files[0], input_files[1]), constraint);
+   msi::evolution::Params evo_params{
+           .population_size = g_population_size,
+           .generations_count = g_generations_count,
+           .mutation_chance = g_mutation_chance,
+           .cross_chance = g_cross_chance,
+           .mutation_rate = g_mutation_rate,
+           .optimal_fitness = g_optimal_fitness,
+   };
+
+   auto objective_func = make_objective_function(tours, rand, params, input_files[0], input_files[1]);
+   auto result = msi::evolution::FindOptimal(rand, objective_func, evo_params, constraint);
+
    fmt::print("final result:\n");
    fmt::print("  alpha_initial: {}\n", result.second.alpha_initial);
    fmt::print("  beta_initial: {}\n", result.second.beta_initial);
@@ -94,9 +105,9 @@ int main(int argc, char **argv) {
 
    msi::util::GraphElements graphElements{};
    // msi::cvrp::Tour tour = tours[0];
-   fmt::print("tours.size={}\n",tours.size());
-   for(auto tour : tours)
-      fmt::print("{}\n",tour.min_distance());
+   fmt::print("tours.size={}\n", tours.size());
+   for (auto tour : tours)
+      fmt::print("{}\n", tour.min_distance());
    graphElements.translate_vert_into_edges(tours[0]);
 
    msi::util::Opengl opengl;

@@ -3,9 +3,9 @@
 #include "../Util/IRandomGenerator.h"
 #include <MSI/CVRP/Tour.h>
 #include <functional>
+#include <future>
 #include <numeric>
 #include <unordered_map>
-#include <future>
 
 namespace msi::evolution {
 
@@ -14,7 +14,12 @@ struct Range {
 };
 
 struct Variables {
-   double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
+   double alpha_initial;
+   double beta_initial;
+   double evaporation_rate_initial;
+   double alpha_final;
+   double beta_final;
+   double evaporation_rate_final;
 };
 
 struct Constraint {
@@ -26,9 +31,18 @@ struct Constraint {
    Range evaporation_rate_final;
 };
 
+struct Params {
+   std::size_t population_size;
+   std::size_t generations_count;
+   double mutation_chance;
+   double cross_chance;
+   double mutation_rate;
+   double optimal_fitness;
+};
+
 using ObjectiveFunction = std::function<double(const Variables &)>;
 
-std::pair<double, Variables> FindOptimal(const int g_population_size, const int g_generations_count, const double g_mutation_chance, const double g_cross_chance, const double g_mutation_rate, const double g_optimal_fitness, util::IRandomGenerator &rand, const ObjectiveFunction&objective_function, Constraint constraint);
+std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint);
 
 }// namespace msi::evolution
 
