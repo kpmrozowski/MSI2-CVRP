@@ -28,10 +28,10 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       };
    });
 
-   std::vector<std::pair<double, Variables>> fits_vars(g_population_size);
-   std::vector<std::vector<std::pair<double, Variables>>> generations(g_generations_count);
-   std::vector<double> fitness(g_population_size);
-   std::vector<double> fitness_to_normalise(g_population_size);
+   std::vector<std::pair<double, Variables>> fits_vars(params.population_size);
+   std::vector<std::vector<std::pair<double, Variables>>> generations(params.generations_count);
+   std::vector<double> fitness(params.population_size);
+   std::vector<double> fitness_to_normalise(params.population_size);
    double fitness_to_normalise_sum{};
    std::vector<std::pair<double, Variables>> normalised_fits(g_population_size);
    fmt::print("\nEVALUATING {} ANTS\n", g_population_size);
@@ -52,13 +52,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    });
 
 
-   for (std::size_t i = 0; i < g_generations_count; ++i) {
+   for (std::size_t i = 0; i < params.generations_count; ++i) {
       generations[i] = fits_vars;
       std::vector<Variables> selected;
       std::vector<Variables> crossovers;
-      std::vector<Variables> mutants(g_population_size);
+      std::vector<Variables> mutants(params.population_size);
+      // double accumulated_fit{0};
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
-         return 1. / (fit - g_optimal_fitness) * (fit - g_optimal_fitness);
+         return 1. / (fit - params.optimal_fitness+1.1) * (fit - params.optimal_fitness+1.1);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
       std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), normalised_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
@@ -71,7 +72,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       // });
 
       // selection
-      while (selected.size() < g_population_size * 2) {
+      while (selected.size() < params.population_size * 2) {
          double value = rand.next_double(1.0);
          for (auto fnv : normalised_fits) {
             value -= fnv.first;
@@ -83,12 +84,12 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       }
 
       // crossover
-      auto crossovers_count = static_cast<std::size_t>(rand.next_int(0, g_population_size));
+      auto crossovers_count = static_cast<std::size_t>(rand.next_int(0, params.population_size));
       std::set<std::size_t> parents{};
       std::size_t omega{};// overrelaxation coefficient
       while (crossovers.size() < crossovers_count) {
-         auto fatherId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
-         auto motherId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
+         auto fatherId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
+         auto motherId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
          if (!crossovers.empty()) {
             if (parents.find(fatherId) != parents.end() || parents.find(motherId) != parents.end()) {
                continue;
@@ -99,27 +100,27 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          fmt::print("cross ");
          omega = rand.next_double(1.0);
          double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             alpha_initial = (1.0 - omega) * selected[motherId].alpha_initial + omega * selected[fatherId].alpha_initial;
          } else
             alpha_initial = selected[motherId].alpha_initial;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             beta_initial = (1.0 - omega) * selected[motherId].beta_initial + omega * selected[fatherId].beta_initial;
          } else
             beta_initial = selected[motherId].beta_initial;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             evaporation_rate_initial = (1.0 - omega) * selected[motherId].evaporation_rate_initial + omega * selected[fatherId].evaporation_rate_initial;
          } else
             evaporation_rate_initial = selected[motherId].evaporation_rate_initial;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             alpha_final = (1.0 - omega) * selected[motherId].alpha_final + omega * selected[fatherId].alpha_final;
          } else
             alpha_final = selected[motherId].alpha_final;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             beta_final = (1.0 - omega) * selected[motherId].beta_final + omega * selected[fatherId].beta_final;
          } else
             beta_final = selected[motherId].beta_final;
-         if (rand.next_double(1.0) < g_cross_chance) {
+         if (rand.next_double(1.0) < params.cross_chance) {
             evaporation_rate_final = (1.0 - omega) * selected[motherId].evaporation_rate_final + omega * selected[fatherId].evaporation_rate_final;
          } else
             evaporation_rate_final = selected[motherId].evaporation_rate_final;
@@ -134,8 +135,8 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          });
       }
       // fill population with uncrossed parents
-      while (crossovers.size() < g_population_size) {
-         auto singleId = static_cast<std::size_t>(rand.next_int(0, g_population_size * 2));
+      while (crossovers.size() < params.population_size) {
+         auto singleId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
          if (parents.find(singleId) == parents.end()) {
             parents.insert(singleId);
          } else
@@ -154,30 +155,40 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       }
 
       // mutation
-      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint](Variables &crossover) {
+      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint, &params](Variables &crossover) {
          double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            alpha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+ha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+=======
+         if (rand.next_double(1.0) < params.mutation_chance) {
+
+            // fmt::print("\nbefore mutation result:\n");
+            // fmt::print("  alpha_initial: {}\n", crossover.alpha_initial);
+            // fmt::print("  beta_initial: {}\n", crossover.beta_initial);
+            // fmt::print("  evaporation_initial: {}\n", crossover.evaporation_rate_initial);
+            // fmt::print("  alpha_final: {}\n", crossover.alpha_final);
+            // fmt::print("  beta_final: {}\n", crossover.beta_final);
+            // fmt::print("  evaporation_final: {}\n", crossover.evaporation_rate_final);
+            alpha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             alpha_initial = crossover.alpha_initial;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            beta_initial = crossover.beta_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+         if (rand.next_double(1.0) < params.mutation_chance) {
+            beta_initial = crossover.beta_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            evaporation_rate_initial = crossover.evaporation_rate_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+         if (rand.next_double(1.0) < params.mutation_chance) {
+            evaporation_rate_initial = crossover.evaporation_rate_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            alpha_final = crossover.alpha_final * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+         if (rand.next_double(1.0) < params.mutation_chance) {
+            alpha_final = crossover.alpha_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            beta_final = crossover.beta_final * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+         if (rand.next_double(1.0) < params.mutation_chance) {
+            beta_final = crossover.beta_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < g_mutation_chance) {
-            evaporation_rate_final = crossover.evaporation_rate_final * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
+         if (rand.next_double(1.0) < params.mutation_chance) {
+            evaporation_rate_final = crossover.evaporation_rate_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
          } else
             beta_initial = crossover.beta_initial;
 
@@ -191,7 +202,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          };
       });
 
-      fmt::print("\nEWALUATING {}/{} GENERATION\n", i, g_generations_count);
+      fmt::print("\nEWALUATING {}/{} GENERATION\n", i, params.generations_count);
       std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
         return std::async(std::launch::async, objective_function, vars);
       });
@@ -206,7 +217,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       optimal_fitness[i] = *it_optimum;
       fmt::print("EVALUATION FINISHED\n\n");
 
-      for (std::size_t p = 0; p < g_population_size; ++p)
+      for (std::size_t p = 0; p < params.population_size; ++p)
          if (fitness[p] < *it_optimum) {
             it_optimum_population = generations.begin() + i;
             it_optimum = fitness.begin() + p;

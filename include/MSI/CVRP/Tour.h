@@ -18,13 +18,13 @@ class Tour {
    std::vector<VertexId> m_min_route;
 
  public:
-   Graph &m_graph;
+   Graph m_graph;
    std::vector<Vehicle> m_vehicles;
    std::vector<std::size_t> m_ant_completed;
    std::vector<bool> m_unvisited_verts;
-   std::size_t current_iter;
+   std::size_t m_current_iter{};
 
-   Tour(Graph &graph,
+   Tour(const Graph& graph,
         Params &params,
         util::IRandomGenerator &rand);
 
