@@ -5,7 +5,7 @@
 
 namespace msi::cvrp {
 
-Tour::Tour(Graph &graph,
+Tour::Tour(const Graph& graph,
            Params &params,
            util::IRandomGenerator &rand)
     : m_rand(rand),
@@ -124,7 +124,7 @@ const Vehicle &Tour::best_vehicle() const noexcept {
 }
 
 void Tour::update_pheromone() noexcept {
-   m_graph.evaporate(this->current_iter);
+   m_graph.evaporate(this->m_current_iter);
 
    for (const Vehicle &ant : m_vehicles) {
       if (ant.current_vert() != m_target) {
