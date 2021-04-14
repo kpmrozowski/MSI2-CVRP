@@ -5,9 +5,9 @@
 namespace msi::cvrp {
 
 struct Params {
-   std::size_t iterations = 8;
+   std::size_t iterations = 1000;
    std::size_t depot_id = 0;
-   std::size_t vehicle_count = 10;
+   std::size_t vehicle_count = 50;
    std::size_t tour_count = 5;
    std::size_t pass_count = 50;
    std::size_t initial_capacity = 160;

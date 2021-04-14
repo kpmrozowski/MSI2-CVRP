@@ -47,7 +47,7 @@ void Tour::run(std::size_t iter) noexcept {
          VertexId selected_vert = 0;
          auto feasible_vertex_count = std::count(feasible_vertices.begin(), feasible_vertices.end(), true);
 
-         if (feasible_vertex_count > 1) {
+         if (feasible_vertex_count > 0) {
             selected_vert = m_vehicles[vehicle_id].choose_next(m_graph, m_rand, feasible_vertices);
             if (selected_vert != m_vehicles[vehicle_id].m_current_vert) {
                m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
