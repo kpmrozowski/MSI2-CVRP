@@ -4,17 +4,10 @@
 
 namespace msi::evolution {
 
-constexpr auto g_population_size = 24;
-constexpr auto g_generations_count = 20;
-constexpr auto g_mutation_chance = 0.8;
-constexpr auto g_cross_chance = 0.8;
-constexpr auto g_mutation_rate = 0.1;// max change: 10%
-constexpr auto g_optimal_fitness = 521.;
-
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, const Constraint constraint) {
-   std::vector<Variables> population(g_population_size);
-   std::vector<Variables> optimal_over_generations(g_generations_count);
-   std::vector<double> optimal_fitness(g_generations_count);
+std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint) {
+   std::vector<Variables> population(params.population_size);
+   std::vector<Variables> optimal_over_generations(params.generations_count);
+   std::vector<double> optimal_fitness(params.generations_count);
 
    std::generate(population.begin(), population.end(), [&rand, &constraint]() {
       return Variables{
@@ -33,11 +26,11 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    std::vector<double> fitness(params.population_size);
    std::vector<double> fitness_to_normalise(params.population_size);
    double fitness_to_normalise_sum{};
-   std::vector<std::pair<double, Variables>> normalised_fits(g_population_size);
-   fmt::print("\nEVALUATING {} ANTS\n", g_population_size);
+   std::vector<std::pair<double, Variables>> normalised_fits(params.population_size);
+   fmt::print("\nEVALUATING {} ANTS\n", params.population_size);
 
 
-   std::vector<std::future<double>> future_fitness(g_population_size);
+   std::vector<std::future<double>> future_fitness(params.population_size);
    std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
       return std::async(std::launch::async, objective_function, vars);
    });
@@ -157,8 +150,6 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       // mutation
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint, &params](Variables &crossover) {
          double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
-ha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(g_mutation_rate) - g_mutation_rate);
-=======
          if (rand.next_double(1.0) < params.mutation_chance) {
 
             // fmt::print("\nbefore mutation result:\n");
@@ -237,8 +228,8 @@ ha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(g_mutation_rate
    auto log_fit = fmt::output_file("fitness.csv");
    log_fit.print("n,generation,specimen,fitness\n");
    iter = 0;
-   for (std::size_t gen = 0; gen < g_generations_count; ++gen) {
-      for (std::size_t pop = 0; pop < g_population_size; ++pop) {
+   for (std::size_t gen = 0; gen < params.generations_count; ++gen) {
+      for (std::size_t pop = 0; pop < params.population_size; ++pop) {
          log_fit.print("{},{},{},{}\n", iter+1, gen, pop, generations[gen][pop].first);
          ++iter;
       }

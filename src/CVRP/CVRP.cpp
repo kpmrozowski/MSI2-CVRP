@@ -3,7 +3,6 @@
 #include <MSI/Util/IRandomGenerator.h>
 #include <MSI/Util/ReadGraph.h>
 #include <MSI/Util/drawGL.h>
-#include <fmt/os.h>
 
 namespace msi::cvrp {
 
@@ -26,15 +25,12 @@ void CVRP::start_cvrp() noexcept {
       for (std::size_t j = i + 1; j < rows; j++)
          graph.connect(i, j, Edge(1.0, Position(En51k5_VERT_COORD[1][i], En51k5_VERT_COORD[2][i], En51k5_VERT_COORD[1][j], En51k5_VERT_COORD[2][j])));
 
-
-   std::vector<double> iteration_results(p.iterations);
-
-   srand(111);
-   Tour tour(graph, p, r);//, 100, 50, 0);
+   std::vector<double> distances(p.iterations);
+   Tour tour(graph, p, r);
    for (std::size_t iter_n = 0; iter_n < p.iterations; ++iter_n) {
+      tour.m_current_iter = iter_n;
       tour.run(iter_n);
-      iteration_results[iter_n] = tour.shortest_distance().first;
-
+      distances[iter_n] = tour.shortest_distance().first;
    }
    auto it_min_dist = min(distances.begin(), distances.end());
    fmt::print("\nShortest_distance = {}", *it_min_dist);
@@ -43,13 +39,6 @@ void CVRP::start_cvrp() noexcept {
 
    msi::util::GraphElements graphElements{};
    graphElements.translate_vert_into_edges(tour);
-
-   auto log = fmt::output_file("ants.csv");
-   log.print("iteration,result\n");
-   for (std::size_t iter_n = 0; iter_n < p.iterations; ++iter_n) {
-      log.print("{},{}\n", iter_n+1, iteration_results[iter_n]);
-   }
-   log.close();
 
    msi::util::Opengl opengl;
    opengl.draw(graphElements);
@@ -75,7 +64,7 @@ double train(std::vector<msi::cvrp::Tour> &tours, util::IRandomGenerator &rand, 
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
-      tour.current_iter = i;
+      tour.m_current_iter = i;
       tour.run(i);
       distances[i] = tour.shortest_distance().first;
    }
