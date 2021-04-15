@@ -52,7 +52,6 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
 
 
    for (std::size_t i = 0; i < params.generations_count; ++i) {
-      srand(time(0));
       generations[i] = fits_vars;
       std::vector<Variables> selected;
       std::vector<Variables> crossovers;
