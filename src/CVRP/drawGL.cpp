@@ -5,7 +5,7 @@ namespace msi::util {
 
 void GraphElements::translate_vert_into_edges(msi::cvrp::Tour& tour) {
     double scale_x = 2/70.;
-    double translate_x = - 1.4;
+    double translate_x = - 1.;
     double scale_y = scale_x;
     double translate_y = -1.05;
     for(VertId i = 0; i < tour.m_graph.vertex_count()+1; i++) {
@@ -46,7 +46,7 @@ void Opengl::draw(GraphElements& ge) {
         exit(EXIT_FAILURE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    window = glfwCreateWindow(1280, 960, "ACO-CVRP graph", NULL, NULL);
+    window = glfwCreateWindow(960, 960, "ACO-CVRP graph", NULL, NULL);
     if (!window)
     {
         glfwTerminate();

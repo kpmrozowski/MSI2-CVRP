@@ -9,10 +9,11 @@ Vehicle::Vehicle(util::IRandomGenerator &rand, const Params &params, std::size_t
       m_params(params),
       m_capacity_left(params.initial_capacity) {}
 
-double Vehicle::traveled_distance(Graph &g) const noexcept {
+double Vehicle::traveled_distance(const Graph &g) const noexcept {
    double dist = 0;
-   for (auto e : m_visited_edges)
-      dist += g.m_distance_table[e.first][e.second];
+   for (auto e : m_visited_edges) {
+      dist += g.distance(e.first, e.second);
+   }
    return dist;
 }
 
