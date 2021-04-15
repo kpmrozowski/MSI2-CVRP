@@ -14,7 +14,7 @@ constexpr auto g_optimal_fitness = 521.;
 namespace opts = boost::program_options;
 constexpr auto g_version = "0.0.1";
 
-msi::evolution::ObjectiveFunction make_objective_function(std::vector<msi::cvrp::Tour> &tours, msi::util::IRandomGenerator &rand, msi::cvrp::Params &params, const std::string &coords_file, const std::string &demands_file) {
+msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, msi::util::IRandomGenerator &rand, msi::cvrp::Params &params, const std::string &coords_file, const std::string &demands_file) {
 
    return [&tours,
            &params,
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
            {0.01, 5.0},
            {0.5, 0.9},
    };
-   std::vector<msi::cvrp::Tour> tours;
+   std::vector<std::unique_ptr<msi::cvrp::Tour>> tours;
 
    msi::evolution::Params evo_params{
            .population_size = g_population_size,
@@ -99,9 +99,14 @@ int main(int argc, char **argv) {
    msi::util::GraphElements graphElements{};
    // msi::cvrp::Tour tour = tours[0];
    fmt::print("tours.size={}\n", tours.size());
-   for (auto tour : tours)
-      fmt::print("{}\n", tour.min_distance());
-   graphElements.translate_vert_into_edges(tours[0]);
+
+   std::sort(tours.begin(), tours.end(), [](const std::unique_ptr<msi::cvrp::Tour> &l, const std::unique_ptr<msi::cvrp::Tour> &r) {
+      return l->min_distance() > r->min_distance();
+   });
+
+   for (const auto &tour : tours)
+      fmt::print("{}\n", tour->min_distance());
+   graphElements.translate_vert_into_edges(*tours[0]);
 
    msi::util::Opengl opengl;
    opengl.draw(graphElements);

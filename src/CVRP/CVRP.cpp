@@ -59,7 +59,7 @@ static std::pair<double, double> regression(std::vector<double> &values) {
    return std::make_pair(y_mean - beta * x_mean, beta);
 }
 
-double train(std::vector<msi::cvrp::Tour> &tours, util::IRandomGenerator &rand, Params &params, Graph &graph) {
+double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, Params &params, Graph &graph) {
 
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
@@ -68,8 +68,7 @@ double train(std::vector<msi::cvrp::Tour> &tours, util::IRandomGenerator &rand, 
       tour.run(i);
       distances[i] = tour.shortest_distance().first;
    }
-   tours.push_back(tour);
-   
+   tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
 
    auto reg = regression(distances);
    return tour.min_distance() + params.iterations * reg.second;
