@@ -12,23 +12,20 @@ constexpr auto g_mutation_rate = 0.1;// max change: 10%
 constexpr auto g_optimal_fitness = 521.;
 
 namespace opts = boost::program_options;
-constexpr auto g_version = "0.0.1";
 
 msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, msi::util::IRandomGenerator &rand, msi::cvrp::Params &params, msi::evolution::Params &evo_params, const std::string &coords_file, const std::string &demands_file) {
-
    return [&tours,
-           &params,
            &evo_params,
            &rand,
-           graph = msi::cvrp::graph_from_file(params, coords_file, demands_file)](const msi::evolution::Variables &vars) -> double {
+           graph = msi::cvrp::graph_from_file(coords_file, demands_file)](const msi::evolution::Variables &vars) -> double {
+      msi::cvrp::Params params;
       params.alpha_initial = vars.alpha_initial;
       params.beta_initial = vars.beta_initial;
       params.evaporation_rate_initial = vars.evaporation_rate_initial;
       params.alpha_final = vars.alpha_final;
       params.beta_final = vars.beta_final;
       params.evaporation_rate_final = vars.evaporation_rate_final;
-      auto graph_copy = msi::cvrp::Graph(graph);
-      auto result = msi::cvrp::train(tours, rand, params, evo_params, graph_copy);
+      auto result = msi::cvrp::train(tours, rand, params, evo_params, graph);
       fmt::print("\nfinal result:\n");
       fmt::print("  alpha_initial: {}\n", params.alpha_initial);
       fmt::print("  beta_initial: {}\n", params.beta_initial);

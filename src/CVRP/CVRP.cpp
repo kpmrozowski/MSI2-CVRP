@@ -18,7 +18,7 @@ void CVRP::start_cvrp() noexcept {
    cols = 2;
    En51k5_DEMANDS = re.read_file("./src/CVRP/E-n51-k5_DEMANDS.txt", rows, cols);
    Params p;
-   Graph graph(p, rows);
+   Graph graph(rows);
    graph.import_vertices(En51k5_VERT_COORD, En51k5_DEMANDS);
    graph.compute_distances();
    for (std::size_t i = 0; i < rows; i++)
@@ -59,8 +59,7 @@ static std::pair<double, double> regression(std::vector<double> &values) {
    return std::make_pair(y_mean - beta * x_mean, beta);
 }
 
-double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, Params &params, msi::evolution::Params &evo_params, Graph &graph) {
-
+double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, const Params &params, msi::evolution::Params &evo_params, const Graph &graph) {
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
@@ -74,7 +73,7 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
    return tour.min_distance() - evo_params.optimal_fitness/2 - 100 + params.iterations * reg.second;
 }
 
-Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {
+Graph graph_from_file(const std::string &fn_coords, const std::string &fn_demands) {
    msi::util::Reader re;
    std::size_t rows = 51;
    std::size_t cols = 3;
@@ -83,7 +82,7 @@ Graph graph_from_file(Params &params, const std::string &fn_coords, const std::s
    cols = 2;
    auto demands = re.read_file(fn_demands, rows, cols);
 
-   Graph graph(params, rows);
+   Graph graph(rows);
    graph.import_vertices(coords, demands);
    graph.compute_distances();
 
