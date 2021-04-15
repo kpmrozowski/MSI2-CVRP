@@ -60,7 +60,7 @@ static std::size_t find_path_length(msi::ant_system::Graph &graph, msi::ant_syst
 }
 
 TEST(AntSystem, RandomGraph) {
-   srand(800);
+   // srand(800);
    Random r;
 
    msi::ant_system::Graph graph(50);
@@ -69,7 +69,7 @@ TEST(AntSystem, RandomGraph) {
       graph.connect(r.next_int(50), r.next_int(50), msi::ant_system::Edge(1.0, 0.0, msi::ant_system::Position(r.next_double(10.0), r.next_double(10.0), r.next_double(10.0), r.next_double(10.0))));
    }
 
-   srand(111);
+   // srand(111);
    msi::ant_system::Tour tour(graph, r, 100, 50, 0);
    for (std::size_t i = 0; i < 100; ++i) {
       tour.run();
@@ -84,7 +84,7 @@ TEST(AntSystem, RandomGraph) {
 }
 
 TEST(AntSystem, Hub) {
-   srand(800);
+   // srand(800);
    Random r;
 
    msi::ant_system::Graph graph(10);

@@ -12,7 +12,6 @@ namespace msi::cvrp {
 class Tour {
    util::IRandomGenerator &m_rand;
    Params &m_params;
-   std::size_t m_passes;
    VertexId m_target;
    double m_min_distance = std::numeric_limits<double>::infinity();
    std::vector<VertexId> m_min_route;

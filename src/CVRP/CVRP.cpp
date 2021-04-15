@@ -7,7 +7,7 @@
 namespace msi::cvrp {
 
 void CVRP::start_cvrp() noexcept {
-   srand(time(0));
+   // srand(102);
    msi::util::Random r;
    msi::util::Reader re;
    // re.display_file();
@@ -59,7 +59,7 @@ static std::pair<double, double> regression(std::vector<double> &values) {
    return std::make_pair(y_mean - beta * x_mean, beta);
 }
 
-double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, Params &params, Graph &graph) {
+double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, Params &params, msi::evolution::Params &evo_params, Graph &graph) {
 
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
@@ -71,7 +71,7 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
 
    auto reg = regression(distances);
-   return tour.min_distance() + params.iterations * reg.second;
+   return tour.min_distance() - evo_params.optimal_fitness/2 - 100 + params.iterations * reg.second;
 }
 
 Graph graph_from_file(Params &params, const std::string &fn_coords, const std::string &fn_demands) {

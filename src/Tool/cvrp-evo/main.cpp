@@ -4,8 +4,8 @@
 #include <boost/program_options.hpp>
 #include <fmt/core.h>
 
-constexpr auto g_population_size = 6;
-constexpr auto g_generations_count = 2;
+constexpr auto g_population_size = 24;
+constexpr auto g_generations_count = 100;
 constexpr auto g_mutation_chance = 0.8;
 constexpr auto g_cross_chance = 0.8;
 constexpr auto g_mutation_rate = 0.1;// max change: 10%
@@ -14,10 +14,11 @@ constexpr auto g_optimal_fitness = 521.;
 namespace opts = boost::program_options;
 constexpr auto g_version = "0.0.1";
 
-msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, msi::util::IRandomGenerator &rand, msi::cvrp::Params &params, const std::string &coords_file, const std::string &demands_file) {
+msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, msi::util::IRandomGenerator &rand, msi::cvrp::Params &params, msi::evolution::Params &evo_params, const std::string &coords_file, const std::string &demands_file) {
 
    return [&tours,
            &params,
+           &evo_params,
            &rand,
            graph = msi::cvrp::graph_from_file(params, coords_file, demands_file)](const msi::evolution::Variables &vars) -> double {
       params.alpha_initial = vars.alpha_initial;
@@ -27,7 +28,7 @@ msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::uniqu
       params.beta_final = vars.beta_final;
       params.evaporation_rate_final = vars.evaporation_rate_final;
       auto graph_copy = msi::cvrp::Graph(graph);
-      auto result = msi::cvrp::train(tours, rand, params, graph_copy);
+      auto result = msi::cvrp::train(tours, rand, params, evo_params, graph_copy);
       fmt::print("\nfinal result:\n");
       fmt::print("  alpha_initial: {}\n", params.alpha_initial);
       fmt::print("  beta_initial: {}\n", params.beta_initial);
@@ -56,7 +57,6 @@ int main(int argc, char **argv) {
    }
    auto input_files = input_value.as<std::vector<std::string>>();
 
-   srand(time(0));
    msi::util::Random rand;
    msi::cvrp::Params params;
    msi::evolution::Constraint constraint{
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
            {0.85, 0.999},
            {1.0, 8.0},
            {0.01, 5.0},
-           {0.5, 0.9},
+           {0.01, 0.5},
    };
    std::vector<std::unique_ptr<msi::cvrp::Tour>> tours;
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
            .optimal_fitness = g_optimal_fitness,
    };
 
-   auto objective_func = make_objective_function(tours, rand, params, input_files[0], input_files[1]);
+   auto objective_func = make_objective_function(tours, rand, params, evo_params, input_files[0], input_files[1]);
    auto result = msi::evolution::FindOptimal(rand, objective_func, evo_params, constraint);
 
    fmt::print("final result:\n");
@@ -96,18 +96,23 @@ int main(int argc, char **argv) {
    fmt::print("  evaporation_final: {}\n", result.second.evaporation_rate_final);
    fmt::print("  Fitness: {}\n", result.first);
 
-   msi::util::GraphElements graphElements{};
    // msi::cvrp::Tour tour = tours[0];
    fmt::print("tours.size={}\n", tours.size());
 
    std::sort(tours.begin(), tours.end(), [](const std::unique_ptr<msi::cvrp::Tour> &l, const std::unique_ptr<msi::cvrp::Tour> &r) {
-      return l->min_distance() > r->min_distance();
+      return l->min_distance() < r->min_distance();
    });
 
    for (const auto &tour : tours)
       fmt::print("{}\n", tour->min_distance());
-   graphElements.translate_vert_into_edges(*tours[0]);
+   
+   msi::util::GraphElements graphElements1{};
+   graphElements1.translate_vert_into_edges(*tours[0]);
+   msi::util::Opengl opengl1;
+   opengl1.draw(graphElements1);
 
-   msi::util::Opengl opengl;
-   opengl.draw(graphElements);
+   // msi::util::GraphElements graphElements2{};
+   // msi::util::Opengl opengl2;
+   // graphElements2.translate_vert_into_edges(**(tours.end() - 1));
+   // opengl2.draw(graphElements2);
 }

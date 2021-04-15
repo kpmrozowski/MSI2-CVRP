@@ -10,7 +10,6 @@ Tour::Tour(const Graph& graph,
            util::IRandomGenerator &rand)
     : m_rand(rand),
       m_params(params),
-      m_passes(params.pass_count),
       m_target(params.depot_id),
       m_graph(graph),
       m_ant_completed(m_params.vehicle_count, 0),

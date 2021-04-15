@@ -10,14 +10,20 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    std::vector<double> optimal_fitness(params.generations_count);
 
    std::generate(population.begin(), population.end(), [&rand, &constraint]() {
+      double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
+      beta_initial = rand.next_double(constraint.beta_initial.min, constraint.beta_initial.max);
+      evaporation_rate_initial = rand.next_double(constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max);
+      alpha_final = rand.next_double(constraint.alpha_final.min, constraint.alpha_final.max);
+      beta_final = rand.next_double(constraint.beta_final.min, constraint.beta_final.max);
+      evaporation_rate_final = rand.next_double(constraint.alpha_initial.min, constraint.alpha_initial.max);
       return Variables{
+              alpha_initial,
+              beta_initial,
+              evaporation_rate_initial,
+              alpha_final,
+              beta_final,
+              evaporation_rate_final
               // initial constraints
-              rand.next_double(0.1, 2.0),
-              rand.next_double(3.0, 9.0),
-              rand.next_double(0.85, 0.999),
-              rand.next_double(1.0, 2.0),
-              rand.next_double(0.01, 5.0),
-              rand.next_double(0.5, 0.9),
       };
    });
 
@@ -31,7 +37,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
 
 
    std::vector<std::future<double>> future_fitness(params.population_size);
-   std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
+   std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables &vars) {
       return std::async(std::launch::async, objective_function, vars);
    });
    std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
@@ -46,13 +52,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
 
 
    for (std::size_t i = 0; i < params.generations_count; ++i) {
+      srand(time(0));
       generations[i] = fits_vars;
       std::vector<Variables> selected;
       std::vector<Variables> crossovers;
       std::vector<Variables> mutants(params.population_size);
       // double accumulated_fit{0};
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
-         return 1. / (fit - params.optimal_fitness+1.1) * (fit - params.optimal_fitness+1.1);
+         return 1. / fit * fit;
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
       std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), normalised_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
@@ -77,7 +84,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       }
 
       // crossover
-      auto crossovers_count = static_cast<std::size_t>(rand.next_int(0, params.population_size));
+      auto crossovers_count = static_cast<std::size_t>(rand.next_int(params.population_size / 2, params.population_size));
       std::set<std::size_t> parents{};
       std::size_t omega{};// overrelaxation coefficient
       while (crossovers.size() < crossovers_count) {
@@ -194,14 +201,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       });
 
       fmt::print("\nEWALUATING {}/{} GENERATION\n", i, params.generations_count);
-      std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
-        return std::async(std::launch::async, objective_function, vars);
+      std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables &vars) {
+         return std::async(std::launch::async, objective_function, vars);
       });
       std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
-        return f.get();
+         return f.get();
       });
       std::transform(fitness.begin(), fitness.end(), population.begin(), fits_vars.begin(), [](double fit, Variables vars) {
-        return std::make_pair(fit, vars);
+         return std::make_pair(fit, vars);
       });
       auto it_optimum = std::min(fitness.begin(), fitness.end());
       optimal_over_generations[i] = population[it_optimum - fitness.begin()];
@@ -220,7 +227,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    log.print("iteration,fitness,ialpha,ibeta,ievapor,falpha,fbeta,fevapor\n");
    auto iter = 0;
    for (const auto &opt : optimal_over_generations) {
-      log.print("{},{},{},{},{},{},{},{}\n", iter+1, optimal_fitness[iter], opt.alpha_initial, opt.beta_initial, opt.evaporation_rate_initial, opt.alpha_final, opt.beta_final, opt.evaporation_rate_final);
+      log.print("{},{},{},{},{},{},{},{}\n", iter + 1, optimal_fitness[iter], opt.alpha_initial, opt.beta_initial, opt.evaporation_rate_initial, opt.alpha_final, opt.beta_final, opt.evaporation_rate_final);
       ++iter;
    }
    log.close();
@@ -230,7 +237,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    iter = 0;
    for (std::size_t gen = 0; gen < params.generations_count; ++gen) {
       for (std::size_t pop = 0; pop < params.population_size; ++pop) {
-         log_fit.print("{},{},{},{}\n", iter+1, gen, pop, generations[gen][pop].first);
+         log_fit.print("{},{},{},{}\n", iter + 1, gen, pop, generations[gen][pop].first);
          ++iter;
       }
    }
