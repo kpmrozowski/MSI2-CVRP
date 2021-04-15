@@ -11,7 +11,7 @@ namespace msi::cvrp {
 
 class Tour {
    util::IRandomGenerator &m_rand;
-   Params &m_params;
+   Params m_params;
    VertexId m_target;
    double m_min_distance = std::numeric_limits<double>::infinity();
    std::vector<VertexId> m_min_route;
@@ -24,13 +24,13 @@ class Tour {
    std::size_t m_current_iter{};
 
    Tour(const Graph& graph,
-        Params &params,
+        const Params &params,
         util::IRandomGenerator &rand);
 
    void reset_vehicles() noexcept;
    void run(std::size_t iter) noexcept;
    void update_pheromone() noexcept;
-   void run_elite(std::size_t iter) noexcept;
+   void run_elite() noexcept;
    [[nodiscard]] std::pair<double, std::size_t> shortest_distance() noexcept;
    [[nodiscard]] const Vehicle &best_vehicle() const noexcept;
 
