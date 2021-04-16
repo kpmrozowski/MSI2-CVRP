@@ -1,0 +1,38 @@
+Time cost: 24pop*100gen*40iter*10vech = 960'000 = 1h
+Next Time cost: 36*200*180*20 = 25'920'000 = 15h
+
+   msi::evolution::Constraint constraint{
+           std::vector<msi::evolution::Range>({{1., 2.},
+                                               {.4, 2.},
+                                             //   {.1, 1.},
+                                               {.1, .4}}),
+           std::vector<msi::evolution::Range>({{1., 20.},
+                                               {2., 10.},
+                                             //   {.001, 10.},
+                                               {.01, 5.}}),
+           std::vector<msi::evolution::Range>({{.7, .999},
+                                               {.4, .999},
+                                             //   {.001, .99},
+                                               {.005, .999}}),
+   };
+
+constexpr auto g_population_size = 24;
+constexpr auto g_generations_count = 120;
+constexpr auto g_mutation_chance = 0.9;
+constexpr auto g_cross_chance = .6;
+constexpr auto g_mutation_rate = 0.1;
+constexpr auto g_optimal_fitness = 521.;
+
+
+   std::size_t iterations = 180;
+   std::size_t depot_id = 0;
+   std::size_t vehicle_count = 20;
+   std::size_t tour_count = 5;
+   std::size_t initial_capacity = 160;
+   std::vector<double> alpha{.5, .5, .001};
+   std::vector<double> beta{3.6, 3.6, .00001};
+   std::vector<double> evaporation_rate{.4, .4, .001};
+   std::size_t polynomial_order = 2;
+
+
+

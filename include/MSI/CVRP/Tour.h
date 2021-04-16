@@ -6,6 +6,7 @@
 #include "Vehicle.h"
 #include <memory>
 #include <numeric>
+// #include <cmath>
 
 namespace msi::cvrp {
 
@@ -29,6 +30,7 @@ class Tour {
 
    void reset_vehicles() noexcept;
    void run(std::size_t iter) noexcept;
+   double lagrange_pheromone(const std::size_t &n_iter) noexcept;
    void update_pheromone() noexcept;
    void run_elite() noexcept;
    [[nodiscard]] std::pair<double, std::size_t> shortest_distance() noexcept;

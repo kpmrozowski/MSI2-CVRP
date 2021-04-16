@@ -14,21 +14,15 @@ struct Range {
 };
 
 struct Variables {
-   double alpha_initial;
-   double beta_initial;
-   double evaporation_rate_initial;
-   double alpha_final;
-   double beta_final;
-   double evaporation_rate_final;
+   std::vector<double> alpha;
+   std::vector<double> beta;
+   std::vector<double> evaporation_rate;
 };
 
 struct Constraint {
-   Range alpha_initial;
-   Range beta_initial;
-   Range evaporation_rate_initial;
-   Range alpha_final;
-   Range beta_final;
-   Range evaporation_rate_final;
+   std::vector<Range> alpha;
+   std::vector<Range> beta;
+   std::vector<Range> evaporation_rate;
 };
 
 struct Params {
@@ -38,11 +32,12 @@ struct Params {
    double cross_chance;
    double mutation_rate;
    double optimal_fitness;
+   std::size_t polynomial_order;
 };
 
 using ObjectiveFunction = std::function<double(const Variables &)>;
 
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint);
+std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint);
 
 }// namespace msi::evolution
 

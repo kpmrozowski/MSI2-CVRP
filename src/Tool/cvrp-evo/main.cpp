@@ -4,11 +4,11 @@
 #include <boost/program_options.hpp>
 #include <fmt/core.h>
 
-constexpr auto g_population_size = 24;
-constexpr auto g_generations_count = 100;
-constexpr auto g_mutation_chance = 0.8;
-constexpr auto g_cross_chance = 0.8;
-constexpr auto g_mutation_rate = 0.1;// max change: 10%
+constexpr auto g_population_size = 36;
+constexpr auto g_generations_count = 200;
+constexpr auto g_mutation_chance = 0.9;
+constexpr auto g_cross_chance = .6;
+constexpr auto g_mutation_rate = 0.1;
 constexpr auto g_optimal_fitness = 521.;
 
 namespace opts = boost::program_options;
@@ -19,21 +19,19 @@ msi::evolution::ObjectiveFunction make_objective_function(std::vector<std::uniqu
            &rand,
            graph = msi::cvrp::graph_from_file(coords_file, demands_file)](const msi::evolution::Variables &vars) -> double {
       msi::cvrp::Params params;
-      params.alpha_initial = vars.alpha_initial;
-      params.beta_initial = vars.beta_initial;
-      params.evaporation_rate_initial = vars.evaporation_rate_initial;
-      params.alpha_final = vars.alpha_final;
-      params.beta_final = vars.beta_final;
-      params.evaporation_rate_final = vars.evaporation_rate_final;
+      params.alpha = vars.alpha;
+      params.beta = vars.beta;
+      params.evaporation_rate = vars.evaporation_rate;
       auto result = msi::cvrp::train(tours, rand, params, evo_params, graph);
-      fmt::print("\nfinal result:\n");
-      fmt::print("  alpha_initial: {}\n", params.alpha_initial);
-      fmt::print("  beta_initial: {}\n", params.beta_initial);
-      fmt::print("  evaporation_initial: {}\n", params.evaporation_rate_initial);
-      fmt::print("  alpha_final: {}\n", params.alpha_final);
-      fmt::print("  beta_final: {}\n", params.beta_final);
-      fmt::print("  evaporation_final: {}\n", params.evaporation_rate_final);
-      fmt::print("  Fitness: {}\n", result);
+      fmt::print("\nfinal result:");
+      fmt::print("\n  alpha:\t\t");
+      for (auto a : params.alpha) fmt::print("{:0.5f}, ", a);
+      fmt::print("\n  beta:\t\t\t");
+      for (auto b : params.beta) fmt::print("{:0.5f}, ", b);
+      fmt::print("\n  evaporation_rate:\t");
+      for (auto er : params.evaporation_rate) fmt::print("{:0.5f}, ", er);
+      fmt::print("\n  Fitness: {}\n", result);
+      fmt::print("  Distance: {}\n", (*(tours.end() - 1))->min_distance());
       return result;
    };
 }
@@ -57,18 +55,18 @@ int main(int argc, char **argv) {
    msi::util::Random rand;
    msi::cvrp::Params params;
    msi::evolution::Constraint constraint{
-           //   {0.8, 2.0},
-           //   {1.6, 5.0},
-           //   {0.85, 0.99},
-           //   {0.8, 2.0},
-           //   {1.6, 5.0},
-           //   {0.85, 0.99},
-           {0.1, 2.0},
-           {3.0, 9.0},
-           {0.85, 0.999},
-           {1.0, 8.0},
-           {0.01, 5.0},
-           {0.01, 0.5},
+           std::vector<msi::evolution::Range>({{1., 2.},
+                                               {.4, 2.},
+                                             //   {.1, 1.},
+                                               {.1, .4}}),
+           std::vector<msi::evolution::Range>({{1., 20.},
+                                               {2., 10.},
+                                             //   {.001, 10.},
+                                               {.01, 5.}}),
+           std::vector<msi::evolution::Range>({{.7, .999},
+                                               {.4, .999},
+                                             //   {.001, .99},
+                                               {.005, .999}}),
    };
    std::vector<std::unique_ptr<msi::cvrp::Tour>> tours;
 
@@ -82,18 +80,18 @@ int main(int argc, char **argv) {
    };
 
    auto objective_func = make_objective_function(tours, rand, params, evo_params, input_files[0], input_files[1]);
-   auto result = msi::evolution::FindOptimal(rand, objective_func, evo_params, constraint);
+   auto result = msi::evolution::FindOptimal(tours, rand, objective_func, evo_params, constraint);
 
-   fmt::print("final result:\n");
-   fmt::print("  alpha_initial: {}\n", result.second.alpha_initial);
-   fmt::print("  beta_initial: {}\n", result.second.beta_initial);
-   fmt::print("  evaporation_initial: {}\n", result.second.evaporation_rate_initial);
-   fmt::print("  alpha_final: {}\n", result.second.alpha_final);
-   fmt::print("  beta_final: {}\n", result.second.beta_final);
-   fmt::print("  evaporation_final: {}\n", result.second.evaporation_rate_final);
-   fmt::print("  Fitness: {}\n", result.first);
+   fmt::print("\nfinal result:");
+   fmt::print("\n  alpha:\t\t");
+   for (auto a : result.second.alpha) fmt::print("{:0.5f}, ", a);
+   fmt::print("\n  beta:\t\t\t");
+   for (auto b : result.second.beta) fmt::print("{:0.5f}, ", b);
+   fmt::print("\n  evaporation_rate:\t");
+   for (auto er : result.second.evaporation_rate) fmt::print("{:0.5f}, ", er);
+   fmt::print("\n  Fitness: {}\n", result.first);
+   fmt::print("  Distance: {}\n", (*(tours.end() - 1))->min_distance());
 
-   // msi::cvrp::Tour tour = tours[0];
    fmt::print("tours.size={}\n", tours.size());
 
    std::sort(tours.begin(), tours.end(), [](const std::unique_ptr<msi::cvrp::Tour> &l, const std::unique_ptr<msi::cvrp::Tour> &r) {
@@ -102,14 +100,9 @@ int main(int argc, char **argv) {
 
    for (const auto &tour : tours)
       fmt::print("{}\n", tour->min_distance());
-   
+   fmt::print("\nBEST DIST: {}\n", tours[0]->min_distance());
    msi::util::GraphElements graphElements1{};
-   graphElements1.translate_vert_into_edges(*tours[0]);
+   graphElements1.translate_vert_into_edges(*(tours[0]));
    msi::util::Opengl opengl1;
    opengl1.draw(graphElements1);
-
-   // msi::util::GraphElements graphElements2{};
-   // msi::util::Opengl opengl2;
-   // graphElements2.translate_vert_into_edges(**(tours.end() - 1));
-   // opengl2.draw(graphElements2);
 }

@@ -17,10 +17,54 @@ double Vehicle::traveled_distance(const Graph &g) const noexcept {
    return dist;
 }
 
+double Vehicle::lagrange_alpha(std::size_t const &n_iter) noexcept {
+   double result = 0;
+   std::vector<double> iteration(m_params.polynomial_order + 1);
+   double xi = 0.0;
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_order);
+   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+      iteration[i] = xi;
+      xi += iter_increment;
+   }
+   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+      double term = m_params.alpha[i];
+      for (std::size_t j = 0; j <= m_params.polynomial_order; j++) {
+         if (j != i) {
+            term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
+         }
+      }
+      result += term;
+   }
+   if(result <= 0.1) result = 0.1;
+   return result;
+}
+
+double Vehicle::lagrange_beta(std::size_t const &n_iter) noexcept {
+   double result = 0;
+   std::vector<double> iteration(m_params.polynomial_order + 1);
+   double xi = 0.0;
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_order);
+   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+      iteration[i] = xi;
+      xi += iter_increment;
+   }
+   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+      double term = m_params.beta[i];
+      for (std::size_t j = 0; j <= m_params.polynomial_order; j++) {
+         if (j != i) {
+            term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
+         }
+      }
+      result += term;
+   }
+   if(result <= 0.1) result = 0.1;
+   return result;
+}
+
 VertexId Vehicle::choose_next(Graph &g, util::IRandomGenerator &rand, const std::vector<bool> &feasible_vertices) noexcept {
    VertexId selected_vert = m_current_vert;
-   auto alpha = m_params.alpha_final + (m_params.alpha_final - m_params.alpha_initial) * static_cast<double>(m_params.current_iteration) / static_cast<double>(m_params.iterations);
-   double beta = m_params.beta_initial + (m_params.beta_final - m_params.beta_initial) * static_cast<double>(m_params.current_iteration) / static_cast<double>(m_params.iterations);
+   auto alpha = lagrange_alpha(m_params.current_iteration);
+   auto beta = lagrange_beta(m_params.current_iteration);
 
    while (selected_vert == m_current_vert) {
       auto prob_target = rand.next_double(g.probability_sum(m_current_vert, m_visited, alpha, beta));

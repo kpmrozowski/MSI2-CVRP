@@ -45,15 +45,16 @@ void CVRP::start_cvrp() noexcept {
 }
 
 static std::pair<double, double> regression(std::vector<double> &values) {
-   auto x_mean = (values.size()-1.0) / 2.0;
-   auto y_mean = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+   auto x_mean = (values.size()/2-1.0) / 2.0;
+   std::vector<double>::iterator it_half = (values.begin() + values.size()/2);
+   auto y_mean = std::accumulate(it_half, values.end(), 0.0) / values.size()/2;
 
    auto denom = 0.0;
-   for (std::size_t i = 0; i < values.size(); ++i) {
+   for (std::size_t i = values.size()/2; i < values.size(); ++i) {
       denom += std::pow(static_cast<double>(i) - x_mean, 2.0);
    }
 
-   auto beta = std::accumulate(values.begin(), values.end(), 0.0, [x_mean, y_mean, x = 0.0](double acc, double y) mutable {
+   auto beta = std::accumulate(it_half, values.end(), 0.0, [x_mean, y_mean, x = 0.0](double acc, double y) mutable {
       return acc + ((x++) - x_mean) * (y - y_mean);
    }) / denom;
    return std::make_pair(y_mean - beta * x_mean, beta);
@@ -70,7 +71,7 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
 
    auto reg = regression(distances);
-   return tour.min_distance() - evo_params.optimal_fitness/2 - 100 + params.iterations * reg.second;
+   return tour.min_distance() - evo_params.optimal_fitness/2 - 100 - 5 * params.beta[0] + params.iterations * reg.second;
 }
 
 Graph graph_from_file(const std::string &fn_coords, const std::string &fn_demands) {
