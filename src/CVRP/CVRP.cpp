@@ -7,10 +7,17 @@
 namespace msi::cvrp {
 
 static double regression(std::vector<double> const &vals, std::size_t n) {
-   double N = vals.size() / 2;
-   std::vector<double> values(N);
-   for (std::size_t i = 0; i < N; i++) {
-      values[i] = vals[i + N];
+   bool second_half_of_values = false;
+   double N;
+   std::vector<double> values;
+   if (second_half_of_values) {
+      N = vals.size() / 2;
+      for (std::size_t i = 0; i < N; i++) {
+         values.push_back(vals[i + N]);
+      }
+   } else {
+      N = vals.size();
+      values = vals;
    }
    std::vector<double> X(2 * n + 1);//Array that will store the values of sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
    for (std::size_t i = 0; i < 2 * n + 1; i++) {
@@ -97,7 +104,8 @@ void CVRP::start_cvrp() noexcept {
    fmt::print("\nShortest_distance = {}", *it_min_dist);
 
    // graph.print();
-   auto reg = regression(distances, 10);
+   std::size_t REGRESSION_DEGREE = 11;
+   auto reg = regression(distances, REGRESSION_DEGREE);
    fmt::print("\nreg_min={}", reg);
 
    msi::util::GraphElements graphElements{};
@@ -116,8 +124,8 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
       distances[i] = tour.shortest_distance().first;
    }
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
-
-   auto reg = regression(distances, 10);
+   std::size_t REGRESSION_DEGREE = 11;
+   auto reg = regression(distances, REGRESSION_DEGREE);
    fmt::print("\nreg_min={}", reg);
    // return tour.min_distance() - evo_params.optimal_fitness / 2 - 170 + 2 * params.beta[0] + 10 * params.iterations / 2. * reg.second;
    return reg - evo_params.optimal_fitness;

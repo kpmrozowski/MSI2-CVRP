@@ -30,7 +30,8 @@ struct Params {
    std::size_t generations_count;
    double mutation_chance;
    double cross_chance;
-   double mutation_rate;
+   double mutation_rate_initial;
+   double mutation_rate_final;
    double optimal_fitness;
    std::size_t polynomial_degree;
 };

@@ -5,10 +5,11 @@
 #include <fmt/core.h>
 
 constexpr auto g_population_size = 36;
-constexpr auto g_generations_count = 100;
+constexpr auto g_generations_count = 50;
 constexpr auto g_mutation_chance = 0.9;
 constexpr auto g_cross_chance = .6;
-constexpr auto g_mutation_rate = 0.1;
+constexpr auto g_mutation_rate_initial = 0.1;
+constexpr auto g_mutation_rate_final = 0.02;
 constexpr auto g_optimal_fitness = 521.;
 
 namespace opts = boost::program_options;
@@ -81,7 +82,8 @@ int main(int argc, char **argv) {
            .generations_count = g_generations_count,
            .mutation_chance = g_mutation_chance,
            .cross_chance = g_cross_chance,
-           .mutation_rate = g_mutation_rate,
+           .mutation_rate_initial = g_mutation_rate_initial,
+           .mutation_rate_final = g_mutation_rate_final,
            .optimal_fitness = g_optimal_fitness,
    };
 
