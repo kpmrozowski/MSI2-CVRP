@@ -158,8 +158,9 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       }
 
       // mutation
-      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&i, &params, &rand, &constraint, &evo_params](Variables &crossover) {
-         double mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
+      double mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
+      fmt::print("\nmutation_rate={}, ", mutation_rate);
+      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&mutation_rate, &params, &rand, &constraint, &evo_params](Variables &crossover) {
          std::vector<double> alpha(params.polynomial_degree + 1, 0);
          std::vector<double> beta(params.polynomial_degree + 1, 0);
          std::vector<double> evaporation_rate(params.polynomial_degree + 1, 0);
