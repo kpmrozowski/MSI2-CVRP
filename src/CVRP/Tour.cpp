@@ -124,16 +124,16 @@ const Vehicle &Tour::best_vehicle() const noexcept {
 
 double Tour::lagrange_pheromone(std::size_t const &n_iter) noexcept {
    double result = 0;
-   std::vector<double> iteration(m_params.polynomial_order + 1);
+   std::vector<double> iteration(m_params.polynomial_degree + 1);
    double xi = 0.0;
-   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_order);
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_degree);
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       iteration[i] = xi;
       xi += iter_increment;
    }
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       double term = m_params.evaporation_rate[i];
-      for (std::size_t j = 0; j <= m_params.polynomial_order; j++) {
+      for (std::size_t j = 0; j <= m_params.polynomial_degree; j++) {
          if (j != i) {
             term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
          }
@@ -141,6 +141,7 @@ double Tour::lagrange_pheromone(std::size_t const &n_iter) noexcept {
       result += term;
    }
    if(result <= 0.01) result = 0.01;
+   if(result >= 0.99) result = 0.99;
    return result;
 }
 

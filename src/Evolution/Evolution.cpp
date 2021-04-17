@@ -11,15 +11,29 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
    std::vector<double> optimal_fitness(params.generations_count);
    msi::cvrp::Params p;
 
-   std::generate(population.begin(), population.end(), [&p, &rand, &constraint]() {
-      std::vector<double> alpha(p.polynomial_order + 1, 0);
-      std::vector<double> beta(p.polynomial_order + 1, 0);
-      std::vector<double> evaporation_rate(p.polynomial_order + 1, 0);
-      for (std::size_t i = 0; i <= p.polynomial_order; i++) {
-         alpha[i] = rand.next_double(constraint.alpha[i].min, constraint.alpha[i].max);
-         beta[i] = rand.next_double(constraint.beta[i].min, constraint.beta[i].max);
-         evaporation_rate[i] = rand.next_double(constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
-      }
+   std::generate(population.begin(), population.end(), [&p, &rand, &constraint, &params]() {
+      std::vector<double> alpha(p.polynomial_degree + 1, 0);
+      std::vector<double> beta(p.polynomial_degree + 1, 0);
+      std::vector<double> evaporation_rate(p.polynomial_degree + 1, 0);
+      // Uncomment to start from boundary limits:
+      // for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
+      //    alpha[i] = rand.next_double(constraint.alpha[i].min, constraint.alpha[i].max);
+      //    beta[i] = rand.next_double(constraint.beta[i].min, constraint.beta[i].max);
+      //    evaporation_rate[i] = rand.next_double(constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
+      // }
+      // Uncomment to start from custom limits:
+      double low = 1 - params.mutation_rate;
+      double high = 1 + params.mutation_rate;
+
+      alpha = {0.5 * rand.next_double(low, high),
+               1.1 * rand.next_double(low, high),
+               0.25 * rand.next_double(low, high)};
+      beta = {2.2 * rand.next_double(low, high),
+              1.9 * rand.next_double(low, high),
+              0.2 * rand.next_double(low, high)};
+      evaporation_rate = {0.9 * rand.next_double(low, high),
+                          0.9 * rand.next_double(low, high),
+                          0.18 * rand.next_double(low, high)};
       return Variables{
               alpha,
               beta,
@@ -59,6 +73,7 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       std::vector<Variables> crossovers;
       std::vector<Variables> mutants(params.population_size);
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
+         if (fit <= 0) fit = 2.;
          return 1. / pow(fit, 4.);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
@@ -99,10 +114,10 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
             parents.insert(motherId);
          }
          omega = rand.next_double(1.0);
-         std::vector<double> alpha(p.polynomial_order + 1, 0);
-         std::vector<double> beta(p.polynomial_order + 1, 0);
-         std::vector<double> evaporation_rate(p.polynomial_order + 1, 0);
-         for (std::size_t i = 0; i <= p.polynomial_order; i++) {
+         std::vector<double> alpha(p.polynomial_degree + 1, 0);
+         std::vector<double> beta(p.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(p.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
             if (rand.next_double(1.0) < params.cross_chance) {
                alpha[i] = (1.0 - omega) * selected[motherId].alpha[i] + omega * selected[fatherId].alpha[i];
             } else
@@ -116,7 +131,7 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
             } else
                evaporation_rate[i] = selected[motherId].evaporation_rate[i];
          }
-         for (std::size_t i = 0; i <= p.polynomial_order; i++) {
+         for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
             alpha[i] = std::clamp(alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
             beta[i] = std::clamp(beta[i], constraint.beta[i].min, constraint.beta[i].max);
             evaporation_rate[i] = std::clamp(evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
@@ -131,10 +146,10 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
          } else
             continue;
          parents.insert(singleId);
-         std::vector<double> alpha(p.polynomial_order + 1, 0);
-         std::vector<double> beta(p.polynomial_order + 1, 0);
-         std::vector<double> evaporation_rate(p.polynomial_order + 1, 0);
-         for (std::size_t i = 0; i <= p.polynomial_order; i++) {
+         std::vector<double> alpha(p.polynomial_degree + 1, 0);
+         std::vector<double> beta(p.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(p.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
             alpha[i] = std::clamp(selected[singleId].alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
             beta[i] = std::clamp(selected[singleId].beta[i], constraint.beta[i].min, constraint.beta[i].max);
             evaporation_rate[i] = std::clamp(selected[singleId].evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
@@ -144,10 +159,10 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
 
       // mutation
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&p, &rand, &constraint, &params](Variables &crossover) {
-         std::vector<double> alpha(p.polynomial_order + 1, 0);
-         std::vector<double> beta(p.polynomial_order + 1, 0);
-         std::vector<double> evaporation_rate(p.polynomial_order + 1, 0);
-         for (std::size_t i = 0; i <= p.polynomial_order; i++) {
+         std::vector<double> alpha(p.polynomial_degree + 1, 0);
+         std::vector<double> beta(p.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(p.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
             if (rand.next_double(1.0) < params.mutation_chance) {
                alpha[i] = crossover.alpha[i] * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
             } else
@@ -161,7 +176,7 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
             } else
                evaporation_rate[i] = crossover.beta[i];
          }
-         for (std::size_t i = 0; i <= p.polynomial_order; i++) {
+         for (std::size_t i = 0; i <= p.polynomial_degree; i++) {
             alpha[i] = std::clamp(alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
             beta[i] = std::clamp(beta[i], constraint.beta[i].min, constraint.beta[i].max);
             evaporation_rate[i] = std::clamp(evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
@@ -176,7 +191,7 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       });
       std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [&ant_nr](std::future<double> &f) {
          ant_nr++;
-         fmt::print("\nant{}", ant_nr);
+         fmt::print("ant{}, ", ant_nr);
          return f.get();
       });
       std::transform(fitness.begin(), fitness.end(), population.begin(), fits_vars.begin(), [](double fit, Variables vars) {
@@ -198,11 +213,11 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
    auto log = fmt::output_file("params.csv");
    log.print("iteration,fitness,");
    for (std::size_t i = 0; i < 3; i++)
-      for (std::size_t j = 0; j <= p.polynomial_order; j++) {
+      for (std::size_t j = 0; j <= p.polynomial_degree; j++) {
          if (i == 0) log.print("alpha{},", j);
          if (i == 1) log.print("beta{},", j);
          if (i == 2)
-            if (j != p.polynomial_order)
+            if (j != p.polynomial_degree)
                log.print("evaporation_rate{},", j);
             else
                log.print("evaporation_rate{}", j);
@@ -211,11 +226,11 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
    for (const auto &opt : optimal_over_generations) {
       log.print("\n{},{},", iter + 1, optimal_fitness[iter]);
       for (std::size_t i = 0; i < 3; i++)
-         for (std::size_t j = 0; j <= p.polynomial_order; j++) {
+         for (std::size_t j = 0; j <= p.polynomial_degree; j++) {
             if (i == 0) log.print("{},", opt.alpha[j]);
             if (i == 1) log.print("{},", opt.beta[j]);
             if (i == 2) {
-               if (j != p.polynomial_order)
+               if (j != p.polynomial_degree)
                   log.print("{},", opt.evaporation_rate[j]);
                else
                   log.print("{}", opt.evaporation_rate[j]);
@@ -228,11 +243,11 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
    auto log_fit = fmt::output_file("fitness_distances_params.csv");
    log_fit.print("n,generation,specimen,fitness,distance,");
    for (std::size_t i = 0; i < 3; i++)
-      for (std::size_t j = 0; j <= p.polynomial_order; j++) {
+      for (std::size_t j = 0; j <= p.polynomial_degree; j++) {
          if (i == 0) log_fit.print("alpha{},", j);
          if (i == 1) log_fit.print("beta{},", j);
          if (i == 2) {
-            if (j != p.polynomial_order)
+            if (j != p.polynomial_degree)
                log_fit.print("evaporation_rate{},", j);
             else
                log_fit.print("evaporation_rate{}", j);
@@ -243,11 +258,11 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       for (std::size_t pop = 0; pop < params.population_size; ++pop) {
          log_fit.print("\n{},{},{},{},{},", iter + 1, gen, pop, generations[gen][pop].first, tours[params.population_size * (gen + 1) + pop]->min_distance());
          for (std::size_t i = 0; i < 3; i++)
-            for (std::size_t j = 0; j <= p.polynomial_order; j++) {
+            for (std::size_t j = 0; j <= p.polynomial_degree; j++) {
                if (i == 0) log_fit.print("{},", generations[gen][pop].second.alpha[j]);
                if (i == 1) log_fit.print("{},", generations[gen][pop].second.beta[j]);
                if (i == 2) {
-                  if (j != p.polynomial_order)
+                  if (j != p.polynomial_degree)
                      log_fit.print("{},", generations[gen][pop].second.evaporation_rate[j]);
                   else
                      log_fit.print("{}", generations[gen][pop].second.evaporation_rate[j]);

@@ -1,5 +1,5 @@
 Time cost: 24pop*100gen*40iter*10vech = 960'000 = 1h
-Next Time cost: 36*200*180*20 = 25'920'000 = 15h
+Next Time cost: 24*200*180*20 = 17'280'000 = 10h
 
    msi::evolution::Constraint constraint{
            std::vector<msi::evolution::Range>({{1., 2.},
@@ -32,7 +32,7 @@ constexpr auto g_optimal_fitness = 521.;
    std::vector<double> alpha{.5, .5, .001};
    std::vector<double> beta{3.6, 3.6, .00001};
    std::vector<double> evaporation_rate{.4, .4, .001};
-   std::size_t polynomial_order = 2;
+   std::size_t polynomial_degree = 2;
 
 
 

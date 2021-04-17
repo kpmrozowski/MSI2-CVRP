@@ -5,7 +5,7 @@
 #include <fmt/core.h>
 
 constexpr auto g_population_size = 36;
-constexpr auto g_generations_count = 200;
+constexpr auto g_generations_count = 100;
 constexpr auto g_mutation_chance = 0.9;
 constexpr auto g_cross_chance = .6;
 constexpr auto g_mutation_rate = 0.1;
@@ -54,20 +54,26 @@ int main(int argc, char **argv) {
 
    msi::util::Random rand;
    msi::cvrp::Params params;
+   // msi::evolution::Constraint constraint{
+   //         std::vector<msi::evolution::Range>({{.05, 20.},
+   //                                             {.2, 20.},
+   //                                           //   {.1, 1.},
+   //                                             {.05, 20.}}),
+   //         std::vector<msi::evolution::Range>({{1., 20.},
+   //                                             {.05, 10.},
+   //                                           //   {.001, 10.},
+   //                                             {.05, 5.}}),
+   //         std::vector<msi::evolution::Range>({{.7, .999},
+   //                                             {.4, .999},
+   //                                           //   {.001, .99},
+   //                                             {.01, .999}}),
+   // };
    msi::evolution::Constraint constraint{
-           std::vector<msi::evolution::Range>({{1., 2.},
-                                               {.4, 2.},
-                                             //   {.1, 1.},
-                                               {.1, .4}}),
-           std::vector<msi::evolution::Range>({{1., 20.},
-                                               {2., 10.},
-                                             //   {.001, 10.},
-                                               {.01, 5.}}),
-           std::vector<msi::evolution::Range>({{.7, .999},
-                                               {.4, .999},
-                                             //   {.001, .99},
-                                               {.005, .999}}),
+      std::vector<msi::evolution::Range>(3, {.05, 20.}),
+      std::vector<msi::evolution::Range>(3, {.001, 20.}),
+      std::vector<msi::evolution::Range>(3, {.001, .999}),
    };
+
    std::vector<std::unique_ptr<msi::cvrp::Tour>> tours;
 
    msi::evolution::Params evo_params{

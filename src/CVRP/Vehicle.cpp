@@ -19,16 +19,16 @@ double Vehicle::traveled_distance(const Graph &g) const noexcept {
 
 double Vehicle::lagrange_alpha(std::size_t const &n_iter) noexcept {
    double result = 0;
-   std::vector<double> iteration(m_params.polynomial_order + 1);
+   std::vector<double> iteration(m_params.polynomial_degree + 1);
    double xi = 0.0;
-   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_order);
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_degree);
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       iteration[i] = xi;
       xi += iter_increment;
    }
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       double term = m_params.alpha[i];
-      for (std::size_t j = 0; j <= m_params.polynomial_order; j++) {
+      for (std::size_t j = 0; j <= m_params.polynomial_degree; j++) {
          if (j != i) {
             term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
          }
@@ -41,23 +41,23 @@ double Vehicle::lagrange_alpha(std::size_t const &n_iter) noexcept {
 
 double Vehicle::lagrange_beta(std::size_t const &n_iter) noexcept {
    double result = 0;
-   std::vector<double> iteration(m_params.polynomial_order + 1);
+   std::vector<double> iteration(m_params.polynomial_degree + 1);
    double xi = 0.0;
-   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_order);
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_degree);
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       iteration[i] = xi;
       xi += iter_increment;
    }
-   for (std::size_t i = 0; i <= m_params.polynomial_order; i++) {
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
       double term = m_params.beta[i];
-      for (std::size_t j = 0; j <= m_params.polynomial_order; j++) {
+      for (std::size_t j = 0; j <= m_params.polynomial_degree; j++) {
          if (j != i) {
             term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
          }
       }
       result += term;
    }
-   if(result <= 0.1) result = 0.1;
+   if(result <= .01) result = .01;
    return result;
 }
 

@@ -6,6 +6,67 @@
 
 namespace msi::cvrp {
 
+static double regression(std::vector<double> const &vals, std::size_t n) {
+   double N = vals.size() / 2;
+   std::vector<double> values(N);
+   for (std::size_t i = 0; i < N; i++) {
+      values[i] = vals[i + N];
+   }
+   std::vector<double> X(2 * n + 1);//Array that will store the values of sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+   for (std::size_t i = 0; i < 2 * n + 1; i++) {
+      X[i] = 0;
+      for (std::size_t j = 0; j < N; j++) {
+         X[i] += std::pow(j, i);//consecutive positions of the array will store N,sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+      }
+   }
+   // fmt::print("\nX={}", X[0]);
+   std::vector<std::vector<double>> B(n + 1, std::vector<double>(n + 2));//B is the Normal matrix(augmented) that will store the equations
+   for (std::size_t i = 0; i <= n; i++)
+      for (std::size_t j = 0; j <= n; j++)
+         B[i][j] = X[i + j];    //Build the Normal matrix by storing the corresponding coefficients at the right positions except the last column of the matrix
+   std::vector<double> Y(n + 1);//Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+   for (std::size_t i = 0; i < n + 1; i++) {
+      Y[i] = 0;
+      for (std::size_t j = 0; j < N; j++)
+         Y[i] += pow(j, i) * values[j];//consecutive positions will store sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+   }
+   for (std::size_t i = 0; i <= n; i++)
+      B[i][n + 1] = Y[i];             //load the values of Y as the last column of B(Normal Matrix but augmented)
+   n++;                               //n is made n+1 because the Gaussian Elimination part below was for n equations, but here n is the n of polynomial and for n n we get n+1 equations
+   for (std::size_t i = 0; i < n; i++)//From now Gaussian Elimination starts(can be ignored) to solve the set of linear equations (Pivotisation)
+      for (std::size_t k = i + 1; k < n; k++)
+         if (B[i][i] < B[k][i])
+            for (std::size_t j = 0; j <= n; j++) {
+               double temp = B[i][j];
+               B[i][j] = B[k][j];
+               B[k][j] = temp;
+            }
+   for (std::size_t i = 0; i < n - 1; i++)//loop to perform the gauss elimination
+      for (std::size_t k = i + 1; k < n; k++) {
+         double t = B[k][i] / B[i][i];
+         for (std::size_t j = 0; j <= n; j++)
+            B[k][j] -= t * B[i][j];//make the elements below the pivot elements equal to zero or elimnate the variables
+      }
+   std::vector<double> a(n);       //'a' is for value of the final coefficients
+   for (int i = n - 1; i >= 0; i--)//back-substitution
+   {                               //x is an array whose values correspond to the values of x,y,z..
+      a[i] = B[i][n];              //make the variable to be calculated equal to the rhs of the last equation
+      for (std::size_t j = 0; j < n; j++)
+         if (j != i)//then subtract all the lhs values except the coefficient of the variable whose value                                   is being calculated
+            a[i] -= B[i][j] * a[j];
+      a[i] /= B[i][i];//now finally divide the rhs by the coefficient of the variable to be calculated
+   }
+   std::vector<double> distances(N);// regression values
+   std::generate(distances.begin(), distances.end(), [&n, &a, x = 0.0]() mutable {
+      double distance = 0.0;
+      for (std::size_t i = 0; i < n - 1; i++)
+         distance += a[i] * pow(x, static_cast<double>(i));
+      x++;
+      return distance;
+   });
+   return *(min(distances.begin(), distances.end()));
+}
+
 void CVRP::start_cvrp() noexcept {
    // srand(102);
    msi::util::Random r;
@@ -36,28 +97,14 @@ void CVRP::start_cvrp() noexcept {
    fmt::print("\nShortest_distance = {}", *it_min_dist);
 
    // graph.print();
+   auto reg = regression(distances, 10);
+   fmt::print("\nreg_min={}", reg);
 
    msi::util::GraphElements graphElements{};
    graphElements.translate_vert_into_edges(tour);
 
    msi::util::Opengl opengl;
    opengl.draw(graphElements);
-}
-
-static std::pair<double, double> regression(std::vector<double> &values) {
-   auto x_mean = (values.size()/2-1.0) / 2.0;
-   std::vector<double>::iterator it_half = (values.begin() + values.size()/2);
-   auto y_mean = std::accumulate(it_half, values.end(), 0.0) / values.size()/2;
-
-   auto denom = 0.0;
-   for (std::size_t i = values.size()/2; i < values.size(); ++i) {
-      denom += std::pow(static_cast<double>(i) - x_mean, 2.0);
-   }
-
-   auto beta = std::accumulate(it_half, values.end(), 0.0, [x_mean, y_mean, x = 0.0](double acc, double y) mutable {
-      return acc + ((x++) - x_mean) * (y - y_mean);
-   }) / denom;
-   return std::make_pair(y_mean - beta * x_mean, beta);
 }
 
 double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, const Params &params, msi::evolution::Params &evo_params, const Graph &graph) {
@@ -70,8 +117,10 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
    }
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
 
-   auto reg = regression(distances);
-   return tour.min_distance() - evo_params.optimal_fitness/2 - 100 - 5 * params.beta[0] + params.iterations * reg.second;
+   auto reg = regression(distances, 10);
+   fmt::print("\nreg_min={}", reg);
+   // return tour.min_distance() - evo_params.optimal_fitness / 2 - 170 + 2 * params.beta[0] + 10 * params.iterations / 2. * reg.second;
+   return reg - evo_params.optimal_fitness;
 }
 
 Graph graph_from_file(const std::string &fn_coords, const std::string &fn_demands) {

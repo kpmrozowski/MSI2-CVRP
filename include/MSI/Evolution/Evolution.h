@@ -32,7 +32,7 @@ struct Params {
    double cross_chance;
    double mutation_rate;
    double optimal_fitness;
-   std::size_t polynomial_order;
+   std::size_t polynomial_degree;
 };
 
 using ObjectiveFunction = std::function<double(const Variables &)>;

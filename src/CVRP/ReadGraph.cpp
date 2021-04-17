@@ -27,17 +27,16 @@ void Reader::display_file()
 
 	for(int i = 0; i < rows; ++i) {
 		for(int j = 0; j < cols; ++j)
-			std::cout <<En51k5_VERT_COORD[j][i] <<"\t";
-		std::cout <<"\n";
+			fmt::print("{}\t", En51k5_VERT_COORD[j][i]);
+		fmt::print("\n");
 	}
-	std::cout <<"\n";
-	std::cout <<"\n";
+	fmt::print("\n\n");
    cols = 2;
 	En51k5_DEMANDS = read_file("./src/CVRP/E-n51-k5_DEMANDS.txt",rows,cols);
 	for(int i = 0; i < rows; ++i) {
 		for(int j = 0; j < cols; ++j)
-			std::cout <<En51k5_DEMANDS[j][i] <<"\t";
-		std::cout <<"\n";
+			fmt::print("{}\t", En51k5_DEMANDS[j][i]);
+		fmt::print("\n");
 	}
 }
 

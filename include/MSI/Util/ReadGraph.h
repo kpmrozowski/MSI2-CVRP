@@ -1,6 +1,5 @@
 #ifndef CVRP_READGRAPH_H
 #define CVRP_READGRAPH_H
-#include <iostream>
 #include <fstream>
 #include <string_view>
 #include <fmt/core.h>
