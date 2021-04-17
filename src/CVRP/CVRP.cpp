@@ -63,12 +63,12 @@ static double regression(std::vector<double> const &vals, std::size_t n) {
             a[i] -= B[i][j] * a[j];
       a[i] /= B[i][i];//now finally divide the rhs by the coefficient of the variable to be calculated
    }
-   std::vector<double> distances(N);// regression values
-   std::generate(distances.begin(), distances.end(), [&n, &a, x = 0.0]() mutable {
+   std::vector<double> distances(2*N);// regression values
+   std::generate(distances.begin(), distances.end(), [&N, &distances, &n, &a, x = 0.0]() mutable {
       double distance = 0.0;
       for (std::size_t i = 0; i < n - 1; i++)
          distance += a[i] * pow(x, static_cast<double>(i));
-      x++;
+      x += N/distances.size();
       return distance;
    });
    return *(min(distances.begin(), distances.end()));
@@ -124,11 +124,11 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
       distances[i] = tour.shortest_distance().first;
    }
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
-   std::size_t REGRESSION_DEGREE = 11;
+   std::size_t REGRESSION_DEGREE = params.iterations/6 + 1;
    auto reg = regression(distances, REGRESSION_DEGREE);
    fmt::print("\nreg_min={}", reg);
    // return tour.min_distance() - evo_params.optimal_fitness / 2 - 170 + 2 * params.beta[0] + 10 * params.iterations / 2. * reg.second;
-   return reg - evo_params.optimal_fitness;
+   return reg + tour.min_distance() - 2 * evo_params.optimal_fitness;
 }
 
 Graph graph_from_file(const std::string &fn_coords, const std::string &fn_demands) {

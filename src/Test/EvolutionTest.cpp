@@ -21,7 +21,8 @@ TEST(Evolution, Simple) {
            .generations_count = 10,
            .mutation_chance = 0.8,
            .cross_chance = 0.8,
-           .mutation_rate = 0.1,
+           .mutation_rate_initial = 0.1,
+           .mutation_rate_final = 0.1,
            .optimal_fitness = 521,
    };
         

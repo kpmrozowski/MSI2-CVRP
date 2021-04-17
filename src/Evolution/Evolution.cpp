@@ -25,9 +25,9 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       double low = 1 - evo_params.mutation_rate_initial;
       double high = 1 + evo_params.mutation_rate_initial;
 
-      alpha = {0.75 * rand.next_double(low, high),
+      alpha = {0.86 * rand.next_double(low, high),
                1.1 * rand.next_double(low, high),
-               0.25 * rand.next_double(low, high)};
+               0.15 * rand.next_double(low, high)};
       beta = {3.2 * rand.next_double(low, high),
               3.2 * rand.next_double(low, high),
               0.3 * rand.next_double(low, high)};
@@ -99,7 +99,8 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       }
 
       // crossover
-      auto crossovers_count = static_cast<std::size_t>(rand.next_int(evo_params.population_size / 2, evo_params.population_size));
+      // auto crossovers_count = static_cast<std::size_t>(rand.next_int(evo_params.population_size / 2, evo_params.population_size));
+      auto crossovers_count = static_cast<std::size_t>(0.8 * evo_params.population_size);
       fmt::print("\n{} crosses, {} singles", crossovers_count, evo_params.population_size - crossovers_count);
       std::set<std::size_t> parents{};
       std::size_t omega{};// overrelaxation coefficient
@@ -159,7 +160,8 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
 
       // mutation
       double mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
-      fmt::print("\nmutation_rate={}, ", mutation_rate);
+      fmt::print("\n\nmutation_rate={}\n", mutation_rate);
+      fmt::print("\nmutation_rate={}");
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&mutation_rate, &params, &rand, &constraint, &evo_params](Variables &crossover) {
          std::vector<double> alpha(params.polynomial_degree + 1, 0);
          std::vector<double> beta(params.polynomial_degree + 1, 0);
