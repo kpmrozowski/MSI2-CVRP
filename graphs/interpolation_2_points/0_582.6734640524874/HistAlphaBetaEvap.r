@@ -5,12 +5,14 @@ library(hrbrthemes)
 library(reshape2)
 
 setwd(".")
-mydata <- read.csv("fitness_distances_params.csv", header = TRUE)
+mydata_hist <- read.csv("distances.csv", header = TRUE)
+mydata <- read.csv("params.csv", header = TRUE)
+df_hist <- data.frame(mydata_hist)
 df <- data.frame(mydata)
 # hist(mydata$distance, 100) # Example: 100 breaks, but you can specify them at will
 
 # basic histogram
-dist_hist <- ggplot2::ggplot(df, aes(x = distance)) +
+dist_hist <- ggplot2::ggplot(df_hist, aes(x = distance)) +
    ggplot2::geom_histogram(
       binwidth = 5,
       fill = "#69b3a2",
@@ -18,7 +20,7 @@ dist_hist <- ggplot2::ggplot(df, aes(x = distance)) +
       alpha = .9) +
   geom_hline(yintercept = .333, linetype = 3, alpha = .8) +
   scale_fill_grey(start = .4) +
-  scale_x_continuous(breaks = (seq(0, 2000, by = 10)),limits=c(NA, 700)) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 10)),limits=c(NA, 800)) +
   scale_y_continuous(breaks = (seq(0, 1000, by = 10))) +
   ylab("count") +
   ggtitle("Sumy tras kolejnych pokoleń") +
@@ -37,7 +39,12 @@ dist_hist <- ggplot2::ggplot(df, aes(x = distance)) +
   theme(axis.title.y = element_text(size = 15, vjust = 2)) +
   theme(axis.title.x = element_text(size = 15, vjust = -1)) +
   theme(plot.title = element_text(size = 20, vjust = 2)) +
-  theme(axis.text.x = element_text(size = 10, vjust = -1)) +
+  theme(axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 10,
+    angle = 45,
+    vjust = .4)) +
   theme(axis.text.y = element_text(size = 10, hjust = -.1)) +
   theme(plot.margin = margin(.2, .2, .2, .2, "cm"),
   plot.background = element_rect(
@@ -48,16 +55,15 @@ dist_hist <- ggplot2::ggplot(df, aes(x = distance)) +
 ggsave("histogram.png")
 
 # alpha points
-alpha_graph <- ggplot2::ggplot(df, aes(x = n)) +
-  geom_point(aes(x = n, y = alpha0, fill = 'alpha0', colour = 'alpha0'), data = df, size = 1, shape = 18) +
-  geom_point(aes(x = n, y = alpha1, fill = 'alpha1', colour = 'alpha1'), data = df, size = 1, shape = 17) +
-  geom_point(aes(x = n, y = alpha2, fill = 'alpha2', colour = 'alpha2'), data = df, size = .8, shape = 16) +
+alpha_graph <- ggplot2::ggplot(df, aes(x = iteration)) +
+  geom_point(aes(x = iteration, y = ialpha, fill = 'ialpha', colour = 'ialpha'), data = df, size = 3, shape = 18) +
+  geom_point(aes(x = iteration, y = falpha, fill = 'falpha', colour = 'falpha'), data = df, size = 1.5, shape = 17) +
 scale_fill_grey(start = .04) +
   ylab("alpha") +
-  scale_x_continuous(breaks = (breaks=seq(0, 5000, by = 500)),limits=c(0, 3700)) +
-  scale_y_continuous(breaks = (breaks=seq(0, 5, by = 0.5)),limits=c(0, 5)) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 10)),limits=c(0, 100)) +
+  scale_y_continuous(breaks = (breaks=seq(0, 5, by = 0.1)),limits=c(0, 2)) +
   theme_gray() +
-  theme(legend.position = c(.9, .8)) +
+  theme(legend.position = c(.95, .75)) +
   theme(plot.title = element_text(size = rel(1))) +
   theme(panel.background = element_rect(
     fill = "grey90"),
@@ -86,22 +92,21 @@ scale_fill_grey(start = .04) +
   )) +
   labs(
     title = "Eksploatacja kolejnych pokoleń",
-    subtitle = "alpha0, alpha1, alpha2 to wartości początkowa, środkowa i końcowa",
-    caption = "Do regresji wykorzystano funkcję kwadratową",
+    subtitle = "ialpha, falpha to wartości początkowa i końcowa",
+    caption = "Do regresji wykorzystano funkcję liniową",
     fill = "Alpha")
 ggsave("alpha.png")
 
 # beta points
-alpha_graph <- ggplot2::ggplot(df, aes(x = n)) +
-  geom_point(aes(x = n, y = beta1, fill = 'beta1', colour = 'beta1'), data = df, size = 1, shape = 18) +
-  geom_point(aes(x = n, y = beta2, fill = 'beta2', colour = 'beta2'), data = df, size = .5, shape = 17) +
-  geom_point(aes(x = n, y = beta0, fill = 'beta0', colour = 'beta0'), data = df, size = 1, shape = 16) +
+betha_graph <- ggplot2::ggplot(df, aes(x = iteration)) +
+  geom_point(aes(x = iteration, y = ibeta, fill = 'ibeta', colour = 'ibeta'), data = df, size = 3, shape = 18) +
+  geom_point(aes(x = iteration, y = fbeta, fill = 'fbeta', colour = 'fbeta'), data = df, size = 1.5, shape = 17) +
 scale_fill_grey(start = .04) +
   ylab("beta") +
-  scale_x_continuous(breaks = (breaks=seq(0, 5000, by = 500)),limits=c(0, 3700)) +
-  scale_y_continuous(breaks = (breaks=seq(0, 100, by = 0.5)),limits=c(0, 9.999)) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 10)),limits=c(0, 100)) +
+  scale_y_continuous(breaks = (breaks=seq(0, 100, by = 0.5)),limits=c(0, 10)) +
   theme_gray() +
-  theme(legend.position = c(.9, .7)) +
+  theme(legend.position = c(.9, .3)) +
   theme(plot.title = element_text(size = rel(1))) +
   theme(panel.background = element_rect(
     fill = "grey90"),
@@ -130,24 +135,22 @@ scale_fill_grey(start = .04) +
   )) +
   labs(
     title = "Eksploracja kolejnych pokoleń",
-    subtitle = "betha0, betha1, betha2 to wartości początkowa, środkowa i końcowa",
-    caption = "Do regresji wykorzystano funkcję kwadratową",
+    subtitle = "ibetha, fbetha to wartości początkowa i końcowa",
+    caption = "Do regresji wykorzystano funkcję liniową",
     fill = "Beta")
 ggsave("beta.png")
 
 
-# points
-alpha_graph <- ggplot2::ggplot(df, aes(x = n)) +
-  geom_point(aes(x = n, y = evaporation_rate0, fill = 'evap0', color = 'evap0'), data = df, size = 1., shape = 18) +
-  geom_point(aes(x = n, y = evaporation_rate2, fill = 'evap2', color = 'evap2'), data = df, size = .5, shape = 17) +
-  geom_point(aes(x = n, y = evaporation_rate1, fill = 'evap1', color = 'evap1'), data = df, size = .5, shape = 16) +
+# points evaporation
+evap_graph <- ggplot2::ggplot(df, aes(x = iteration)) +
+  geom_point(aes(x = iteration, y = ievapor, fill = 'ievapor', color = 'ievapor'), data = df, size = 3, shape = 18) +
+  geom_point(aes(x = iteration, y = fevapor, fill = 'fevapor', color = 'fevapor'), data = df, size = 1.5, shape = 17) +
 scale_fill_grey(start = .04) +
   ylab("Evaporation rate") +
-  scale_x_continuous(breaks = (breaks=seq(0, 5000, by = 500)),limits=c(0, 4000)) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 10)),limits=c(0, 100)) +
   scale_y_continuous(breaks = (breaks=seq(0, 2, by = 0.05)),limits=c(0, 0.999)) +
-  ggtitle("Evaporation rate quadratic change over generations") +
   theme_gray() +
-  theme(legend.position = c(.95, .5)) +
+  theme(legend.position = c(.9, .8)) +
   theme(plot.title = element_text(size = rel(1))) +
   theme(panel.background = element_rect(
     fill = "grey90"),
@@ -176,19 +179,20 @@ scale_fill_grey(start = .04) +
   )) +
   labs(
     title = "Współczynnik parowania kolejnych pokoleń",
-    subtitle = "evap0, evap1, evap2 to wartości początkowa, środkowa i końcowa",
-    caption = "Do regresji wykorzystano funkcję kwadratową",
+    subtitle = "ievapor, fevapor to wartości początkowa i końcowa",
+    caption = "Do regresji wykorzystano funkcję liniową",
     fill = "Evap")
 ggsave("evaporation_rate.png")
 
+
 # distances
-alpha_graph <- ggplot2::ggplot(df, aes(x = n)) +
-  geom_point(aes(x = n, y = distance, fill = 'distance', color = 'distance'), data = df, size = 1, shape = 16) +
+dist_graph <- ggplot2::ggplot(df_hist, aes(x = n)) +
+  geom_point(aes(x = n, y = distance, fill = 'distance', color = 'distance'), data = df_hist, size = 2, shape = 18) +
 scale_fill_grey(start = .04) +
-  scale_x_continuous(breaks = (breaks=seq(0, 5000, by = 500)),limits=c(0, 4000)) +
-  scale_y_continuous(breaks = (breaks=seq(0, 1000, by = 10)),limits=c(540, 730)) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 100)),limits=c(0, 2424)) +
+  scale_y_continuous(breaks = (breaks=seq(0, 2000, by = 10)),limits=c(569, 675)) +
   theme_gray() +
-  theme(legend.position = c(.9, .8)) +
+  theme(legend.position = c(.9, .9)) +
   theme(plot.title = element_text(size = rel(1))) +
   theme(panel.background = element_rect(
     fill = "grey90"),
@@ -208,7 +212,7 @@ scale_fill_grey(start = .04) +
     face = "bold",
     color = "#993333",
     size = 10, 
-    hjust = -10.3)) +
+    hjust = 0)) +
   theme(plot.margin = margin(.2, .2, .2, .2, "cm"),
   plot.background = element_rect(
     fill = "white",

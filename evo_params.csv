@@ -1,0 +1,2 @@
+iteration,fitness,alpha0,alpha1,alpha2,beta0,beta1,beta2,evaporation_rate0,evaporation_rate1,evaporation_rate2
+1,100,0.714,0.1726,0.05633,3.2839,2.62934,0.005186,0.988222,0.94783,0.005589

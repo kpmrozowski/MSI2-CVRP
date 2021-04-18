@@ -150,7 +150,6 @@ scale_fill_grey(start = .04) +
   ylab("Evaporation rate") +
   scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 500)),limits=c(0, 8000)) +
   scale_y_continuous(breaks = (breaks=seq(0, 2, by = 0.05)),limits=c(0, 0.999)) +
-  ggtitle("Evaporation rate quadratic change over generations") +
   theme_gray() +
   theme(legend.position = c(.9, .6)) +
   theme(plot.title = element_text(size = rel(1))) +
@@ -185,3 +184,43 @@ scale_fill_grey(start = .04) +
     caption = "Do regresji wykorzystano funkcję kwadratową",
     fill = "Evap")
 ggsave("evaporation_rate.png")
+
+# distances
+alpha_graph <- ggplot2::ggplot(df, aes(x = n)) +
+  geom_point(aes(x = n, y = distance, fill = 'distance', color = 'distance'), data = df, size = 1, shape = 16) +
+scale_fill_grey(start = .04) +
+  scale_x_continuous(breaks = (breaks=seq(0, 10000, by = 500)),limits=c(0, 8000)) +
+  scale_y_continuous(breaks = (breaks=seq(0, 1000, by = 10)),limits=c(550, 830)) +
+  theme_gray() +
+  theme(legend.position = c(.9, .8)) +
+  theme(plot.title = element_text(size = rel(1))) +
+  theme(panel.background = element_rect(
+    fill = "grey90"),
+    panel.grid.minor = element_blank(),
+    ) +
+  theme(text = element_text(size = 14)) +
+  theme(axis.title.y = element_text(size = 15, vjust = 2)) +
+  theme(axis.title.x = element_text(size = 15, vjust = -1)) +
+  theme(plot.title = element_text(size = 20, vjust = 2, hjust = 0)) +
+  theme(axis.text.x = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 10,
+    angle = 45,
+    vjust = .4)) +
+  theme(axis.text.y = element_text(
+    face = "bold",
+    color = "#993333",
+    size = 10, 
+    hjust = -10.3)) +
+  theme(plot.margin = margin(.2, .2, .2, .2, "cm"),
+  plot.background = element_rect(
+    fill = "white",
+    colour = "993333",
+    size = 0
+  )) +
+  ylab("Distance") +
+  labs(
+    title = "Sumy długości tras kolejnych pokoleń",
+    fill = "distance")
+ggsave("distances.png")
