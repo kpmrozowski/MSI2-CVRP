@@ -4,12 +4,12 @@
 #include <boost/program_options.hpp>
 #include <fmt/core.h>
 
-constexpr auto g_population_size = 36;
-constexpr auto g_generations_count = 200;
+constexpr auto g_population_size = 12;
+constexpr auto g_generations_count = 1;
 constexpr auto g_mutation_chance = 0.9;
 constexpr auto g_cross_chance = .8;
-constexpr auto g_mutation_rate_initial = 0.2;
-constexpr auto g_mutation_rate_final = 0.05;
+constexpr auto g_mutation_rate_initial = 0.00;
+constexpr auto g_mutation_rate_final = 0.00;
 constexpr auto g_optimal_fitness = 521.;
 
 namespace opts = boost::program_options;

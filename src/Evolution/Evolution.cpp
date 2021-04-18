@@ -21,19 +21,24 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       //    beta[i] = rand.next_double(constraint.beta[i].min, constraint.beta[i].max);
       //    evaporation_rate[i] = rand.next_double(constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
       // }
-      // Uncomment to start from custom limits:
-      double low = 1 - evo_params.mutation_rate_initial;
-      double high = 1 + evo_params.mutation_rate_initial;
 
-      alpha = {0.86 * rand.next_double(low, high),
-               1.1 * rand.next_double(low, high),
-               0.15 * rand.next_double(low, high)};
-      beta = {3.2 * rand.next_double(low, high),
-              3.2 * rand.next_double(low, high),
-              0.3 * rand.next_double(low, high)};
-      evaporation_rate = {0.4 * rand.next_double(low, high),
-                          0.4 * rand.next_double(low, high),
-                          0.3 * rand.next_double(low, high)};
+      // Uncomment to start from custom limits:
+      // double low = 1 - evo_params.mutation_rate_initial;
+      // double high = 1 + evo_params.mutation_rate_initial;
+
+      // alpha = {0.86 * rand.next_double(low, high),
+      //          1.1 * rand.next_double(low, high),
+      //          0.15 * rand.next_double(low, high)};
+      // beta = {3.2 * rand.next_double(low, high),
+      //         3.2 * rand.next_double(low, high),
+      //         0.3 * rand.next_double(low, high)};
+      // evaporation_rate = {0.4 * rand.next_double(low, high),
+      //                     0.4 * rand.next_double(low, high),
+      //                     0.3 * rand.next_double(low, high)};
+
+      alpha = {.714, .1726, .05633};
+      beta = {3.2839, 2.62934, .005186};
+      evaporation_rate = {.988222, .94783, .005589};
       return Variables{
               alpha,
               beta,

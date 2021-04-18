@@ -40,7 +40,7 @@ static double regression(std::vector<double> const &vals, std::size_t n) {
          double distance = 0.0;
          for (std::size_t i = 0; i < n - 1; i++)
             distance += a[i] * pow(x, static_cast<double>(i));
-         // fmt::print("\nx={}, dist={}", x, distance);
+         fmt::print("\nx={}, dist={}", x, distance);
          x--;
          return distance;
       });
@@ -104,12 +104,13 @@ double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandom
       distances[i] = tour.shortest_distance().first;
    }
    tours.push_back(std::make_unique<msi::cvrp::Tour>(tour));
-   std::size_t REGRESSION_DEGREE = params.iterations / 8 - 1;// 3 -> linear
+   std::size_t REGRESSION_DEGREE = params.iterations / 4 - 1;// 3 -> linear
    auto reg = regression(distances, REGRESSION_DEGREE);
    fmt::print("\nreg_min={}", reg);
    if (reg < tour.min_distance()) reg = tour.min_distance();
    // return tour.min_distance() - evo_params.optimal_fitness / 2 - 170 + 2 * params.beta[0] + 10 * params.iterations / 2. * reg.second;
-   return reg + tour.min_distance() - 2 * evo_params.optimal_fitness + 1.1;
+   // return reg + tour.min_distance() - 2 * evo_params.optimal_fitness + 1.1;
+   return 100.;
 }
 
 Graph graph_from_file(const std::string &fn_coords, const std::string &fn_demands) {
