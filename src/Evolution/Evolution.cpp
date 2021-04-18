@@ -3,40 +3,59 @@
 
 namespace msi::evolution {
 
-std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params params, Constraint constraint) {
-   std::vector<Variables> population(params.population_size);
+std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, const ObjectiveFunction &objective_function, Params evo_params, Constraint constraint) {
+   std::size_t ant_nr{0};
+   std::vector<Variables> population(evo_params.population_size);
+   std::vector<Variables> optimal_over_generations(evo_params.generations_count);
+   std::vector<double> optimal_fitness(evo_params.generations_count);
+   msi::cvrp::Params params;
 
-   std::generate(population.begin(), population.end(), [&rand, &constraint]() {
+   std::generate(population.begin(), population.end(), [&params, &rand, &constraint, &evo_params]() {
+      std::vector<double> alpha(params.polynomial_degree + 1, 0);
+      std::vector<double> beta(params.polynomial_degree + 1, 0);
+      std::vector<double> evaporation_rate(params.polynomial_degree + 1, 0);
+      // Uncomment to start from boundary limits:
+      // for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+      //    alpha[i] = rand.next_double(constraint.alpha[i].min, constraint.alpha[i].max);
+      //    beta[i] = rand.next_double(constraint.beta[i].min, constraint.beta[i].max);
+      //    evaporation_rate[i] = rand.next_double(constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
+      // }
+      // Uncomment to start from custom limits:
+      double low = 1 - evo_params.mutation_rate_initial;
+      double high = 1 + evo_params.mutation_rate_initial;
+
+      alpha = {0.86 * rand.next_double(low, high),
+               1.1 * rand.next_double(low, high),
+               0.15 * rand.next_double(low, high)};
+      beta = {3.2 * rand.next_double(low, high),
+              3.2 * rand.next_double(low, high),
+              0.3 * rand.next_double(low, high)};
+      evaporation_rate = {0.4 * rand.next_double(low, high),
+                          0.4 * rand.next_double(low, high),
+                          0.3 * rand.next_double(low, high)};
       return Variables{
-              // initial constraints
-              rand.next_double(0.1, 2.0),
-              rand.next_double(3.0, 9.0),
-              rand.next_double(0.85, 0.999),
-              rand.next_double(1.0, 2.0),
-              rand.next_double(0.01, 5.0),
-              rand.next_double(0.5, 0.9),
+              alpha,
+              beta,
+              evaporation_rate,
       };
    });
 
-   std::vector<std::pair<double, Variables>> fits_vars(params.population_size);
-   std::vector<std::vector<std::pair<double, Variables>>> generations(params.generations_count);
-   std::vector<double> fitness(params.population_size);
-   std::vector<double> fitness_to_normalise(params.population_size);
+   std::vector<std::pair<double, Variables>> fits_vars(evo_params.population_size);
+   std::vector<std::vector<std::pair<double, Variables>>> generations(evo_params.generations_count);
+   std::vector<double> fitness(evo_params.population_size);
+   std::vector<double> fitness_to_normalise(evo_params.population_size);
    double fitness_to_normalise_sum{};
-   std::vector<std::pair<double, Variables>> normalised_fits(params.population_size);
-   fmt::print("\nEWALUATING {} ANTS\n", params.population_size);
+   std::vector<std::pair<double, Variables>> normalised_fits(evo_params.population_size);
+   fmt::print("\nEVALUATING {} ANTS\n", evo_params.population_size);
 
 
-   // MULTITHREADING
-   // std::future<double> fitness_threads =
-   //         std::async(objective_function, &population[0]);
-   // for (std::size_t thread_nr = 0; thread_nr < params.population_size % 12 + 1; thread_nr++)
-   // ;
-   std::vector<std::future<double>> future_fitness(params.population_size);
-   std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
+   std::vector<std::future<double>> future_fitness(evo_params.population_size);
+   std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables &vars) {
       return std::async(std::launch::async, objective_function, vars);
    });
-   std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
+   std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [&ant_nr](std::future<double> &f) {
+      ant_nr++;
+      fmt::print("ant{}, ", ant_nr);
       return f.get();
    });
 
@@ -47,14 +66,14 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
    });
 
 
-   for (std::size_t i = 0; i < params.generations_count; ++i) {
+   for (std::size_t i = 0; i < evo_params.generations_count; ++i) {
       generations[i] = fits_vars;
       std::vector<Variables> selected;
       std::vector<Variables> crossovers;
-      std::vector<Variables> mutants(params.population_size);
-      // double accumulated_fit{0};
+      std::vector<Variables> mutants(evo_params.population_size);
       std::transform(fitness.begin(), fitness.end(), fitness_to_normalise.begin(), [&](double fit) -> double {
-         return 1. / (fit - params.optimal_fitness+1.1) * (fit - params.optimal_fitness+1.1);
+         if (fit <= 0) fit = 2.;
+         return 1. / pow(fit, 4.);
       });
       fitness_to_normalise_sum = std::accumulate(fitness_to_normalise.begin(), fitness_to_normalise.end(), decltype(fitness_to_normalise)::value_type(0));
       std::transform(fitness_to_normalise.begin(), fitness_to_normalise.end(), population.begin(), normalised_fits.begin(), [&fitness_to_normalise_sum](double fit, Variables vars) {
@@ -67,7 +86,7 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
       // });
 
       // selection
-      while (selected.size() < params.population_size * 2) {
+      while (selected.size() < evo_params.population_size * 2) {
          double value = rand.next_double(1.0);
          for (auto fnv : normalised_fits) {
             value -= fnv.first;
@@ -81,13 +100,15 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
          }
       }
 
-      // crossover
-      auto crossovers_count = static_cast<std::size_t>(rand.next_int(0, params.population_size));
+      fmt::print("\nCROSSOVERS BEGINS");
+      // auto crossovers_count = static_cast<std::size_t>(rand.next_int(evo_params.population_size / 2, evo_params.population_size));
+      auto crossovers_count = static_cast<std::size_t>(0.8 * evo_params.population_size);
+      fmt::print("\n{} crosses, {} singles", crossovers_count, evo_params.population_size - crossovers_count);
       std::set<std::size_t> parents{};
       std::size_t omega{};// overrelaxation coefficient
       while (crossovers.size() < crossovers_count) {
-         auto fatherId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
-         auto motherId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
+         auto fatherId = static_cast<std::size_t>(rand.next_int(0, evo_params.population_size * 2));
+         auto motherId = static_cast<std::size_t>(rand.next_int(0, evo_params.population_size * 2));
          if (!crossovers.empty()) {
             if (parents.find(fatherId) != parents.end() || parents.find(motherId) != parents.end()) {
                continue;
@@ -95,145 +116,167 @@ std::pair<double, Variables> FindOptimal(util::IRandomGenerator &rand, const Obj
             parents.insert(fatherId);
             parents.insert(motherId);
          }
-         fmt::print("cross ");
          omega = rand.next_double(1.0);
-         double alpha_initial, beta_initial, evaporation_rate_initial, alpha_final, beta_final, evaporation_rate_final;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            alpha_initial = (1.0 - omega) * selected[motherId].alpha_initial + omega * selected[fatherId].alpha_initial;
-         } else
-            alpha_initial = selected[motherId].alpha_initial;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            beta_initial = (1.0 - omega) * selected[motherId].beta_initial + omega * selected[fatherId].beta_initial;
-         } else
-            beta_initial = selected[motherId].beta_initial;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            evaporation_rate_initial = (1.0 - omega) * selected[motherId].evaporation_rate_initial + omega * selected[fatherId].evaporation_rate_initial;
-         } else
-            evaporation_rate_initial = selected[motherId].evaporation_rate_initial;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            alpha_final = (1.0 - omega) * selected[motherId].alpha_final + omega * selected[fatherId].alpha_final;
-         } else
-            alpha_final = selected[motherId].alpha_final;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            beta_final = (1.0 - omega) * selected[motherId].beta_final + omega * selected[fatherId].beta_final;
-         } else
-            beta_final = selected[motherId].beta_final;
-         if (rand.next_double(1.0) < params.cross_chance) {
-            evaporation_rate_final = (1.0 - omega) * selected[motherId].evaporation_rate_final + omega * selected[fatherId].evaporation_rate_final;
-         } else
-            evaporation_rate_final = selected[motherId].evaporation_rate_final;
-
-         // fmt::print("\ncrossover result:\n");
-         // fmt::print("  alpha_initial: {}\n", alpha_initial);
-         // fmt::print("  beta_initial: {}\n", beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", alpha_final);
-         // fmt::print("  beta_final: {}\n", beta_final);
-         // fmt::print("  evaporation_final: {}\n", evaporation_rate_final);
-         crossovers.emplace_back(Variables{
-                 std::clamp(alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
-                 std::clamp(beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
-                 std::clamp(evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
-                 std::clamp(alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
-                 std::clamp(beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)});
+         std::vector<double> alpha(params.polynomial_degree + 1, 0);
+         std::vector<double> beta(params.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(params.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+            if (rand.next_double(1.0) < evo_params.cross_chance) {
+               alpha[i] = (1.0 - omega) * selected[motherId].alpha[i] + omega * selected[fatherId].alpha[i];
+            } else
+               alpha[i] = selected[motherId].alpha[i];
+            if (rand.next_double(1.0) < evo_params.cross_chance) {
+               beta[i] = (1.0 - omega) * selected[motherId].beta[i] + omega * selected[fatherId].beta[i];
+            } else
+               beta[i] = selected[motherId].beta[i];
+            if (rand.next_double(1.0) < evo_params.cross_chance) {
+               evaporation_rate[i] = (1.0 - omega) * selected[motherId].evaporation_rate[i] + omega * selected[fatherId].evaporation_rate[i];
+            } else
+               evaporation_rate[i] = selected[motherId].evaporation_rate[i];
+         }
+         for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+            alpha[i] = std::clamp(alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
+            beta[i] = std::clamp(beta[i], constraint.beta[i].min, constraint.beta[i].max);
+            evaporation_rate[i] = std::clamp(evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
+         }
+         crossovers.emplace_back(Variables{alpha, beta, evaporation_rate});
       }
       // fill population with uncrossed parents
-      while (crossovers.size() < params.population_size) {
-         auto singleId = static_cast<std::size_t>(rand.next_int(0, params.population_size * 2));
+      while (crossovers.size() < evo_params.population_size) {
+         auto singleId = static_cast<std::size_t>(rand.next_int(0, evo_params.population_size * 2));
          if (parents.find(singleId) == parents.end()) {
             parents.insert(singleId);
          } else
             continue;
-         fmt::print("single ");
          parents.insert(singleId);
-
-         // fmt::print("\nsingle parent result:\n");
-         // fmt::print("  alpha_initial: {}\n", selected[singleId].alpha_initial);
-         // fmt::print("  beta_initial: {}\n", selected[singleId].beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", selected[singleId].evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", selected[singleId].alpha_final);
-         // fmt::print("  beta_final: {}\n", selected[singleId].beta_final);
-         // fmt::print("  evaporation_final: {}\n", selected[singleId].evaporation_rate_final);
-         crossovers.emplace_back(Variables{
-                 std::clamp(selected[singleId].alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
-                 std::clamp(selected[singleId].beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
-                 std::clamp(selected[singleId].evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
-                 std::clamp(selected[singleId].alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
-                 std::clamp(selected[singleId].beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(selected[singleId].evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)});
+         std::vector<double> alpha(params.polynomial_degree + 1, 0);
+         std::vector<double> beta(params.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(params.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+            alpha[i] = std::clamp(selected[singleId].alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
+            beta[i] = std::clamp(selected[singleId].beta[i], constraint.beta[i].min, constraint.beta[i].max);
+            evaporation_rate[i] = std::clamp(selected[singleId].evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
+         }
+         crossovers.emplace_back(Variables{alpha, beta, evaporation_rate});
       }
 
-      // mutation
-      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&rand, &constraint, &params](Variables &crossover) {
-         double alpha_initial = 0, beta_initial = 0, evaporation_rate_initial = 0, alpha_final = 0, beta_final = 0, evaporation_rate_final = 0;
-         if (rand.next_double(1.0) < params.mutation_chance) {
+      fmt::print("\nMUTATION BEGINS");
+      auto mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
+      fmt::print("\nmutation_rate={}", mutation_rate);
+      std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&mutation_rate, &params, &rand, &constraint, &evo_params](Variables &crossover) {
+         std::vector<double> alpha(params.polynomial_degree + 1, 0);
+         std::vector<double> beta(params.polynomial_degree + 1, 0);
+         std::vector<double> evaporation_rate(params.polynomial_degree + 1, 0);
+         for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+            if (rand.next_double(1.0) < evo_params.mutation_chance) {
+               alpha[i] = crossover.alpha[i] * (1 + 2 * rand.next_double(mutation_rate) - mutation_rate);
+            } else
+               alpha[i] = crossover.alpha[i];
+            if (rand.next_double(1.0) < evo_params.mutation_chance) {
+               beta[i] = crossover.beta[i] * (1 + 2 * rand.next_double(mutation_rate) - mutation_rate);
+            } else
+               beta[i] = crossover.beta[i];
+            if (rand.next_double(1.0) < evo_params.mutation_chance) {
+               evaporation_rate[i] = crossover.evaporation_rate[i] * (1 + 2 * rand.next_double(mutation_rate) - mutation_rate);
+            } else
+               evaporation_rate[i] = crossover.beta[i];
+         }
+         for (std::size_t i = 0; i <= params.polynomial_degree; i++) {
+            alpha[i] = std::clamp(alpha[i], constraint.alpha[i].min, constraint.alpha[i].max);
+            beta[i] = std::clamp(beta[i], constraint.beta[i].min, constraint.beta[i].max);
+            evaporation_rate[i] = std::clamp(evaporation_rate[i], constraint.evaporation_rate[i].min, constraint.evaporation_rate[i].max);
+         }
 
-            // fmt::print("\nbefore mutation result:\n");
-            // fmt::print("  alpha_initial: {}\n", crossover.alpha_initial);
-            // fmt::print("  beta_initial: {}\n", crossover.beta_initial);
-            // fmt::print("  evaporation_initial: {}\n", crossover.evaporation_rate_initial);
-            // fmt::print("  alpha_final: {}\n", crossover.alpha_final);
-            // fmt::print("  beta_final: {}\n", crossover.beta_final);
-            // fmt::print("  evaporation_final: {}\n", crossover.evaporation_rate_final);
-            alpha_initial = crossover.alpha_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            alpha_initial = crossover.alpha_initial;
-         if (rand.next_double(1.0) < params.mutation_chance) {
-            beta_initial = crossover.beta_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < params.mutation_chance) {
-            evaporation_rate_initial = crossover.evaporation_rate_initial * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < params.mutation_chance) {
-            alpha_final = crossover.alpha_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < params.mutation_chance) {
-            beta_final = crossover.beta_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            beta_initial = crossover.beta_initial;
-         if (rand.next_double(1.0) < params.mutation_chance) {
-            evaporation_rate_final = crossover.evaporation_rate_final * (1 + 2 * rand.next_double(params.mutation_rate) - params.mutation_rate);
-         } else
-            beta_initial = crossover.beta_initial;
-
-         // fmt::print("\nmutation result:\n");
-         // fmt::print("  alpha_initial: {}\n", alpha_initial);
-         // fmt::print("  beta_initial: {}\n", beta_initial);
-         // fmt::print("  evaporation_initial: {}\n", evaporation_rate_initial);
-         // fmt::print("  alpha_final: {}\n", alpha_final);
-         // fmt::print("  beta_final: {}\n", beta_final);
-         // fmt::print("  evaporation_final: {}\n", evaporation_rate_final);
-         return Variables{
-                 std::clamp(alpha_initial, constraint.alpha_initial.min, constraint.alpha_initial.max),
-                 std::clamp(beta_initial, constraint.beta_initial.min, constraint.beta_initial.max),
-                 std::clamp(evaporation_rate_initial, constraint.evaporation_rate_initial.min, constraint.evaporation_rate_initial.max),
-                 std::clamp(alpha_final, constraint.alpha_final.min, constraint.alpha_final.max),
-                 std::clamp(beta_final, constraint.beta_final.min, constraint.beta_final.max),
-                 std::clamp(evaporation_rate_final, constraint.evaporation_rate_final.min, constraint.evaporation_rate_final.max)};
+         return Variables{alpha, beta, evaporation_rate};
       });
 
-      fmt::print("\nEWALUATING {}/{} GENERATION\n", i, params.generations_count);
-      std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables& vars) {
-        return std::async(std::launch::async, objective_function, vars);
+      fmt::print("\n\nEWALUATING {}/{} GENERATION\n", i, evo_params.generations_count);
+      std::transform(population.begin(), population.end(), future_fitness.begin(), [&objective_function](const Variables &vars) {
+         return std::async(std::launch::async, objective_function, vars);
       });
-      std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [](std::future<double> &f) {
-        return f.get();
+      std::transform(future_fitness.begin(), future_fitness.end(), fitness.begin(), [&ant_nr](std::future<double> &f) {
+         ant_nr++;
+         fmt::print("ant{}, ", ant_nr);
+         return f.get();
+      });
+      std::transform(fitness.begin(), fitness.end(), population.begin(), fits_vars.begin(), [](double fit, Variables vars) {
+         return std::make_pair(fit, vars);
       });
       auto it_optimum = std::min(fitness.begin(), fitness.end());
-      fmt::print("EWALUATION FINISHED\n\n");
+      optimal_over_generations[i] = population[it_optimum - fitness.begin()];
+      optimal_fitness[i] = *it_optimum;
+      fmt::print("\nEVALUATION FINISHED\n\n");
 
-      for (std::size_t p = 0; p < params.population_size; ++p)
+      for (std::size_t p = 0; p < evo_params.population_size; ++p)
          if (fitness[p] < *it_optimum) {
             it_optimum_population = generations.begin() + i;
             it_optimum = fitness.begin() + p;
          }
    }
 
+   auto log = fmt::output_file("evo_params.csv");
+   log.print("iteration,fitness,");
+   for (std::size_t i = 0; i < 3; i++)
+      for (std::size_t j = 0; j <= params.polynomial_degree; j++) {
+         if (i == 0) log.print("alpha{},", j);
+         if (i == 1) log.print("beta{},", j);
+         if (i == 2)
+            if (j != params.polynomial_degree)
+               log.print("evaporation_rate{},", j);
+            else
+               log.print("evaporation_rate{}", j);
+      }
+   auto iter = 0;
+   for (const auto &opt : optimal_over_generations) {
+      log.print("\n{},{},", iter + 1, optimal_fitness[iter]);
+      for (std::size_t i = 0; i < 3; i++)
+         for (std::size_t j = 0; j <= params.polynomial_degree; j++) {
+            if (i == 0) log.print("{},", opt.alpha[j]);
+            if (i == 1) log.print("{},", opt.beta[j]);
+            if (i == 2) {
+               if (j != params.polynomial_degree)
+                  log.print("{},", opt.evaporation_rate[j]);
+               else
+                  log.print("{}", opt.evaporation_rate[j]);
+            }
+         }
+      ++iter;
+   }
+   log.close();
+
+   auto log_fit = fmt::output_file("fitness_distances_params.csv");
+   log_fit.print("n,generation,specimen,fitness,distance,");
+   for (std::size_t i = 0; i < 3; i++)
+      for (std::size_t j = 0; j <= params.polynomial_degree; j++) {
+         if (i == 0) log_fit.print("alpha{},", j);
+         if (i == 1) log_fit.print("beta{},", j);
+         if (i == 2) {
+            if (j != params.polynomial_degree)
+               log_fit.print("evaporation_rate{},", j);
+            else
+               log_fit.print("evaporation_rate{}", j);
+         }
+      }
+   iter = 0;
+   for (std::size_t gen = 0; gen < evo_params.generations_count; ++gen) {
+      for (std::size_t pop = 0; pop < evo_params.population_size; ++pop) {
+         log_fit.print("\n{},{},{},{},{},", iter + 1, gen, pop, generations[gen][pop].first, tours[evo_params.population_size * (gen + 1) + pop]->min_distance());
+         for (std::size_t i = 0; i < 3; i++)
+            for (std::size_t j = 0; j <= params.polynomial_degree; j++) {
+               if (i == 0) log_fit.print("{},", generations[gen][pop].second.alpha[j]);
+               if (i == 1) log_fit.print("{},", generations[gen][pop].second.beta[j]);
+               if (i == 2) {
+                  if (j != params.polynomial_degree)
+                     log_fit.print("{},", generations[gen][pop].second.evaporation_rate[j]);
+                  else
+                     log_fit.print("{}", generations[gen][pop].second.evaporation_rate[j]);
+               }
+            }
+         ++iter;
+      }
+   }
+
    return generations[it_optimum_population - generations.begin()][it_optimum - fitness.begin()];
-}
+}// namespace msi::evolution
 
 }// namespace msi::evolution

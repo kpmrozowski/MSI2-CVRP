@@ -5,12 +5,11 @@
 
 namespace msi::cvrp {
 
-Tour::Tour(const Graph& graph,
-           Params &params,
+Tour::Tour(const Graph &graph,
+           const Params &params,
            util::IRandomGenerator &rand)
     : m_rand(rand),
       m_params(params),
-      m_passes(params.pass_count),
       m_target(params.depot_id),
       m_graph(graph),
       m_ant_completed(m_params.vehicle_count, 0),
@@ -46,7 +45,7 @@ void Tour::run() noexcept {
 
          VertexId selected_vert = 0;
          auto feasible_vertex_count = std::count(feasible_vertices.begin(), feasible_vertices.end(), true);
-         m_unvisited_verts[0] = true;
+         m_unvisited_verts[0] = false;
 
          if (feasible_vertex_count > 1) {
             selected_vert = m_vehicles[vehicle_id].choose_next(m_graph, m_rand, feasible_vertices);
@@ -54,13 +53,12 @@ void Tour::run() noexcept {
                m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
                m_unvisited_verts[selected_vert] = false;
             }
-         // } else if (feasible_vertex_count == 1) {
-         //    auto it_unvisited_vertex = std::find(m_unvisited_verts.begin(), m_unvisited_verts.end(), true);
-         //    selected_vert = it_unvisited_vertex  - m_unvisited_verts.begin();
-         //    if (selected_vert != m_vehicles[vehicle_id].m_current_vert) {
-         //       m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
-         //       m_unvisited_verts[selected_vert] = false;
-         //    }
+         } else if (feasible_vertex_count == 1) {
+            auto it_unvisited_vertex = std::find(m_unvisited_verts.begin(), m_unvisited_verts.end(), true);
+            selected_vert = it_unvisited_vertex - m_unvisited_verts.begin();
+            if (selected_vert != m_vehicles[vehicle_id].m_current_vert) {
+               m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
+               m_unvisited_verts[selected_vert] = false;
          } else {
             selected_vert = m_params.depot_id;
             m_ant_completed[vehicle_id] += 1;
@@ -88,15 +86,15 @@ void Tour::run() noexcept {
    }
 
    run_elite();
-   fmt::print("{:0.0f} ", dist.first);
+   // fmt::print("{:0.0f} ", dist.first);
 }
 
 void Tour::run_elite() noexcept {
-   if(m_min_route.empty())
+   if (m_min_route.empty())
       return;
 
-   std::for_each(m_min_route.begin()+1, m_min_route.end(), [this, prev = *m_min_route.begin()](VertexId vertex) mutable {
-      this->m_graph.add_pheromone(prev, vertex, 0.2);
+   std::for_each(m_min_route.begin() + 1, m_min_route.end(), [this, prev = *m_min_route.begin()](VertexId vertex) mutable {
+      this->m_graph.add_pheromone(prev, vertex, 1.2);
       prev = vertex;
    });
 }
@@ -123,8 +121,31 @@ const Vehicle &Tour::best_vehicle() const noexcept {
    return m_vehicles[id];
 }
 
+double Tour::lagrange_pheromone(std::size_t const &n_iter) noexcept {
+   double result = 0;
+   std::vector<double> iteration(m_params.polynomial_degree + 1);
+   double xi = 0.0;
+   auto iter_increment = m_params.iterations / static_cast<double>(m_params.polynomial_degree);
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
+      iteration[i] = xi;
+      xi += iter_increment;
+   }
+   for (std::size_t i = 0; i <= m_params.polynomial_degree; i++) {
+      double term = m_params.evaporation_rate[i];
+      for (std::size_t j = 0; j <= m_params.polynomial_degree; j++) {
+         if (j != i) {
+            term = term * (n_iter - iteration[j]) / (iteration[i] - iteration[j]);
+         }
+      }
+      result += term;
+   }
+   if(result <= 0.01) result = 0.01;
+   if(result >= 0.99) result = 0.99;
+   return result;
+}
+
 void Tour::update_pheromone() noexcept {
-   m_graph.evaporate(this->m_current_iter);
+   m_graph.evaporate(lagrange_pheromone(m_current_iter));
 
    for (const Vehicle &ant : m_vehicles) {
       if (ant.current_vert() != m_target) {

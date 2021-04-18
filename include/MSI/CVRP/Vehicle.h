@@ -21,6 +21,8 @@ class Vehicle {
    Vehicle(util::IRandomGenerator &rand, const Params &params, std::size_t vertex_count);
 
    [[nodiscard]] double traveled_distance(const Graph &g) const noexcept;
+   [[nodiscard]] double lagrange_alpha(std::size_t const &n_iter) noexcept;
+   [[nodiscard]] double lagrange_beta(std::size_t const &n_iter) noexcept;
    [[nodiscard]] VertexId choose_next(Graph &g, util::IRandomGenerator &rand, const std::vector<bool> &feasible_vertices) noexcept;
    [[nodiscard]] std::vector<VertexId> route() const noexcept;
    void reset() noexcept;

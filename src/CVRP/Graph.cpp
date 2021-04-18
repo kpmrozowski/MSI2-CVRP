@@ -3,12 +3,11 @@
 
 namespace msi::cvrp {
 
-Graph::Graph(const Params &params, std::size_t vert_count)
+Graph::Graph(std::size_t vert_count)
     : m_vertex_count(vert_count),
       m_vertices(vert_count),
       m_distance_table(std::vector<std::vector<double>>(vert_count, std::vector<double>(vert_count))),
-      m_edges(vert_count * vert_count),
-      m_params(params) {}
+      m_edges(vert_count * vert_count) {}
 
 Position::Position(double _x1, double _y1, double _x2, double _y2)
     : x1{_x1}, y1{_y1}, x2{_x2}, y2{_y2} {}
@@ -96,23 +95,23 @@ void Graph::for_each_feasible(VertexId vertex, const std::vector<bool> &feasible
    }
 }
 
-void Graph::evaporate(std::size_t current_iter) noexcept {
+void Graph::evaporate(double rate) noexcept {
    for (std::optional<Edge> &edge : m_edges) {
       if (edge.has_value()) {
-         edge->m_pheromone *= m_params.evaporation_rate_initial + (current_iter - 0) * (m_params.evaporation_rate_final - m_params.evaporation_rate_initial)/(m_params.iterations - 0);
+         edge->m_pheromone *= rate;
       }
    }
 }
 
-double Graph::probability_sum(VertexId id, std::set<VertexId> &except) const {
+double Graph::probability_sum(VertexId id, std::set<VertexId> &except, double alpha, double beta) const {
    double result = 0.0;
-   for_each_connected(id, [this, &result, &except](VertexId id, const Edge &edge) {
+   for_each_connected(id, [alpha, beta, &result, &except](VertexId id, const Edge &edge) {
       auto visited_it = except.find(id);
       if (visited_it != except.end()) {
          return false;
       }
 
-      result += edge.prob(m_params);
+      result += edge.prob(alpha, beta);
       return false;
    });
    return result;

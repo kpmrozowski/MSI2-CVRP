@@ -6,13 +6,13 @@
 #include "Vehicle.h"
 #include <memory>
 #include <numeric>
+// #include <cmath>
 
 namespace msi::cvrp {
 
 class Tour {
    util::IRandomGenerator &m_rand;
-   Params &m_params;
-   std::size_t m_passes;
+   Params m_params;
    VertexId m_target;
    double m_min_distance = std::numeric_limits<double>::infinity();
    std::vector<VertexId> m_min_route;
@@ -25,11 +25,12 @@ class Tour {
    std::size_t m_current_iter{};
 
    Tour(const Graph& graph,
-        Params &params,
+        const Params &params,
         util::IRandomGenerator &rand);
 
    void reset_vehicles() noexcept;
-   void run() noexcept;
+   void run(std::size_t iter) noexcept;
+   double lagrange_pheromone(const std::size_t &n_iter) noexcept;
    void update_pheromone() noexcept;
    void run_elite() noexcept;
    [[nodiscard]] std::pair<double, std::size_t> shortest_distance() noexcept;
