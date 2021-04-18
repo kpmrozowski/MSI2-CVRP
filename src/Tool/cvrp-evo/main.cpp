@@ -53,8 +53,10 @@ int main(int argc, char **argv) {
    }
    auto input_files = input_value.as<std::vector<std::string>>();
 
+   srand(time(0));
    msi::util::Random rand;
    msi::cvrp::Params params;
+   // Uncomment for custom constraints:
    // msi::evolution::Constraint constraint{
    //         std::vector<msi::evolution::Range>({{.05, 20.},
    //                                             {.2, 20.},
@@ -86,6 +88,19 @@ int main(int argc, char **argv) {
            .mutation_rate_final = g_mutation_rate_final,
            .optimal_fitness = g_optimal_fitness,
    };
+   std::vector<msi::cvrp::Tour> tours;
+
+   msi::evolution::Params evo_params{
+           .population_size = g_population_size,
+           .generations_count = g_generations_count,
+           .mutation_chance = g_mutation_chance,
+           .cross_chance = g_cross_chance,
+           .mutation_rate = g_mutation_rate,
+           .optimal_fitness = g_optimal_fitness,
+   };
+
+   auto objective_func = make_objective_function(tours, rand, params, input_files[0], input_files[1]);
+   auto result = msi::evolution::FindOptimal(rand, objective_func, evo_params, constraint);
 
    auto objective_func = make_objective_function(tours, rand, params, evo_params, input_files[0], input_files[1]);
    auto result = msi::evolution::FindOptimal(tours, rand, objective_func, evo_params, constraint);

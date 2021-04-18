@@ -6,6 +6,7 @@ TEST(Evolution, Simple) {
    auto objective_function = [](const msi::evolution::Variables &vars) -> double {
            return 0; 
 //       return vars.alpha_final + (12 - 0) * (vars.alpha_final - vars.alpha_initial) / (12 - 0) + vars.beta_initial + (12 - 0) * (vars.beta_final - vars.beta_initial) / (12 - 0) - vars.evaporation_rate_initial + (12 - 0) * (vars.evaporation_rate_final - vars.evaporation_rate_initial) / (12 - 0);
+
    };
 
    msi::util::Random r;

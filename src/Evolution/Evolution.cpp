@@ -1,6 +1,5 @@
 #include <MSI/Evolution/Evolution.h>
 #include <fmt/core.h>
-#include <fmt/os.h>
 
 namespace msi::evolution {
 
@@ -92,6 +91,9 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
          for (auto fnv : normalised_fits) {
             value -= fnv.first;
             if (value <= 0) {
+               // Draw without return
+               // if(selected_map.find(fnv.first) == selected_map.end())
+               //    continue;
                selected.push_back(fnv.second);
                break;
             }
@@ -212,7 +214,6 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
          }
    }
 
-
    auto log = fmt::output_file("evo_params.csv");
    log.print("iteration,fitness,");
    for (std::size_t i = 0; i < 3; i++)
@@ -271,8 +272,6 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
                      log_fit.print("{}", generations[gen][pop].second.evaporation_rate[j]);
                }
             }
-         ++iter;
-
          ++iter;
       }
    }

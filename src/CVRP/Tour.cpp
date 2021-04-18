@@ -27,7 +27,7 @@ void Tour::reset_vehicles() noexcept {
    std::fill(m_ant_completed.begin(), m_ant_completed.end(), 0);
 }
 
-void Tour::run(std::size_t iter) noexcept {
+void Tour::run() noexcept {
    this->reset_vehicles();
    VertexId vert_id;
 
@@ -59,7 +59,6 @@ void Tour::run(std::size_t iter) noexcept {
             if (selected_vert != m_vehicles[vehicle_id].m_current_vert) {
                m_vehicles[vehicle_id].m_capacity_left -= m_graph.m_vertices[selected_vert].demand;
                m_unvisited_verts[selected_vert] = false;
-            }
          } else {
             selected_vert = m_params.depot_id;
             m_ant_completed[vehicle_id] += 1;

@@ -95,7 +95,23 @@ void CVRP::start_cvrp() noexcept {
    opengl.draw(graphElements);
 }
 
+static std::pair<double, double> linear_regression(std::vector<double> &values) {
+   auto x_mean = (values.size()-1.0) / 2.0;
+   auto y_mean = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+
+   auto denom = 0.0;
+   for (std::size_t i = 0; i < values.size(); ++i) {
+      denom += std::pow(static_cast<double>(i) - x_mean, 2.0);
+   }
+
+   auto beta = std::accumulate(values.begin(), values.end(), 0.0, [x_mean, y_mean, x = 0.0](double acc, double y) mutable {
+      return acc + ((x++) - x_mean) * (y - y_mean);
+   }) / denom;
+   return std::make_pair(y_mean - beta * x_mean, beta);
+}
+
 double train(std::vector<std::unique_ptr<msi::cvrp::Tour>> &tours, util::IRandomGenerator &rand, const Params &params, msi::evolution::Params &evo_params, const Graph &graph) {
+
    std::vector<double> distances(params.iterations);
    msi::cvrp::Tour tour(graph, params, rand);
    for (std::size_t i = 0; i < params.iterations; ++i) {
