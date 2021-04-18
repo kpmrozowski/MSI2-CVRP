@@ -31,8 +31,8 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
       beta = {3.2 * rand.next_double(low, high),
               3.2 * rand.next_double(low, high),
               0.3 * rand.next_double(low, high)};
-      evaporation_rate = {0.9 * rand.next_double(low, high),
-                          0.9 * rand.next_double(low, high),
+      evaporation_rate = {0.4 * rand.next_double(low, high),
+                          0.4 * rand.next_double(low, high),
                           0.3 * rand.next_double(low, high)};
       return Variables{
               alpha,
@@ -98,7 +98,7 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
          }
       }
 
-      // crossover
+      fmt::print("\nCROSSOVERS BEGINS");
       // auto crossovers_count = static_cast<std::size_t>(rand.next_int(evo_params.population_size / 2, evo_params.population_size));
       auto crossovers_count = static_cast<std::size_t>(0.8 * evo_params.population_size);
       fmt::print("\n{} crosses, {} singles", crossovers_count, evo_params.population_size - crossovers_count);
@@ -158,10 +158,9 @@ std::pair<double, Variables> FindOptimal(std::vector<std::unique_ptr<msi::cvrp::
          crossovers.emplace_back(Variables{alpha, beta, evaporation_rate});
       }
 
-      // mutation
-      double mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
-      fmt::print("\n\nmutation_rate={}\n", mutation_rate);
-      fmt::print("\nmutation_rate={}");
+      fmt::print("\nMUTATION BEGINS");
+      auto mutation_rate = evo_params.mutation_rate_initial + i / static_cast<double>(evo_params.generations_count) * (evo_params.mutation_rate_final - evo_params.mutation_rate_initial);
+      fmt::print("\nmutation_rate={}", mutation_rate);
       std::transform(crossovers.begin(), crossovers.end(), population.begin(), [&mutation_rate, &params, &rand, &constraint, &evo_params](Variables &crossover) {
          std::vector<double> alpha(params.polynomial_degree + 1, 0);
          std::vector<double> beta(params.polynomial_degree + 1, 0);
